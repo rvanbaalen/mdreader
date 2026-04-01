@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/rvanbaalen/mdreader/compare/v1.0.2...v1.0.3) (2026-04-01)
+
+
+### Bug Fixes
+
+* disable electron-builder auto-publish, we upload via gh-release action ([a0ed90f](https://github.com/rvanbaalen/mdreader/commit/a0ed90f2e289a1950d1e341c35fb840470443e72))
+
 ## [1.0.2](https://github.com/rvanbaalen/mdreader/compare/v1.0.1...v1.0.2) (2026-04-01)
 
 
