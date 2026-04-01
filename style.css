@@ -311,19 +311,14 @@ html, body {
   flex-shrink: 0;
   padding: var(--sp-md);
   padding-left: 0;
-  z-index: 10;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  transition: transform var(--dur-medium) var(--ease-enter), opacity var(--dur-medium) var(--ease-enter);
+  transition: width var(--dur-medium) var(--ease-enter), padding var(--dur-medium) var(--ease-enter), opacity var(--dur-medium) var(--ease-enter);
 }
 
 .toc.hidden {
-  transform: translateX(240px);
+  width: 0;
+  padding: 0;
   opacity: 0;
-  pointer-events: none;
+  overflow: hidden;
 }
 
 .toc-inner {
