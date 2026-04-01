@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mdreader</title>
+  <link rel="stylesheet" href="node_modules/@phosphor-icons/web/src/regular/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Title bar -->
+    <div class="titlebar" id="titlebar">
+      <div class="titlebar-spacer"></div>
+      <div class="titlebar-center">
+        <span class="titlebar-path" id="titlebar-path"></span>
+      </div>
+      <div class="titlebar-actions">
+        <button class="titlebar-btn" id="btn-sidebar" title="Toggle sidebar (⌘\)">
+          <i class="ph ph-sidebar-simple"></i>
+        </button>
+        <button class="titlebar-btn" id="btn-toc" title="Toggle table of contents (⌘⇧O)">
+          <i class="ph ph-list-bullets"></i>
+        </button>
+        <button class="titlebar-btn" id="btn-theme" title="Toggle theme (⌘⇧T)">
+          <i class="ph ph-sun" id="icon-sun"></i>
+          <i class="ph ph-moon" id="icon-moon" style="display:none"></i>
+          <i class="ph ph-monitor" id="icon-system" style="display:none"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main layout -->
+    <div class="main-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-inner" id="sidebar-content"></div>
+      </aside>
+
+      <!-- Reader -->
+      <main class="reader" id="reader">
+        <div class="welcome" id="welcome">
+          <h1 class="welcome-title">mdreader</h1>
+          <p class="welcome-subtitle">A beautiful markdown reader</p>
+          <div class="welcome-actions">
+            <button class="welcome-btn" id="btn-open-file">
+              <span><i class="ph ph-file-text"></i> Open File</span><kbd>⌘O</kbd>
+            </button>
+            <button class="welcome-btn" id="btn-open-folder">
+              <span><i class="ph ph-folder-open"></i> Open Folder</span><kbd>⌘⇧O</kbd>
+            </button>
+          </div>
+          <p class="welcome-hint">or drag a .md file anywhere</p>
+        </div>
+        <article class="content" id="content" style="display:none"></article>
+      </main>
+
+      <!-- Table of Contents (right side) -->
+      <aside class="toc hidden" id="toc">
+        <div class="toc-inner" id="toc-content"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
