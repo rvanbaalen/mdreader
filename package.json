@@ -28,7 +28,7 @@
         }
       ],
       "identity": null,
-      "icon": null
+      "icon": "build/icon.icns"
     },
     "dmg": {
       "title": "mdreader",
@@ -52,6 +52,13 @@
       "renderer.js",
       "node_modules/**/*"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "rvanbaalen",
+        "repo": "mdreader"
+      }
+    ],
     "fileAssociations": [
       {
         "ext": "md",
@@ -68,6 +75,7 @@
   "dependencies": {
     "@phosphor-icons/web": "^2.1.2",
     "dompurify": "^3.3.3",
+    "electron-updater": "^6.6.2",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.5"
   },

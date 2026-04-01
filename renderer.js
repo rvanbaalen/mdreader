@@ -317,3 +317,22 @@ document.addEventListener('drop', (e) => {
 applyTheme(getStoredTheme());
 setSidebarVisible(getSidebarVisible());
 setTocVisible(getTocVisible());
+
+// Ask to be default app (only once)
+const DEFAULT_ASKED_KEY = 'mdreader-default-asked';
+ipcRenderer.on('ask-default-app', () => {
+  if (localStorage.getItem(DEFAULT_ASKED_KEY)) return;
+  localStorage.setItem(DEFAULT_ASKED_KEY, 'true');
+  // Show a subtle banner instead of a dialog
+  const banner = el('div', 'default-banner');
+  const msg = el('span', null, 'Set mdreader as your default .md reader?');
+  const yes = el('button', 'default-banner-btn', 'Yes');
+  const no = el('button', 'default-banner-btn dismiss', 'No thanks');
+  yes.addEventListener('click', () => { ipcRenderer.send('set-default-app'); banner.remove(); });
+  no.addEventListener('click', () => banner.remove());
+  banner.append(msg, yes, no);
+  document.body.appendChild(banner);
+});
+
+// Trigger check after a short delay
+setTimeout(() => ipcRenderer.send('check-default-app'), 3000);

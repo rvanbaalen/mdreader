@@ -697,6 +697,54 @@ html, body {
   background: transparent !important;
   color: var(--secondary) !important;
 }
+/* ========================================
+   Default app banner
+   ======================================== */
+
+.default-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-lg);
+  background: color-mix(in oklch, var(--surface) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid var(--edge);
+  border-radius: var(--radius-lg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--secondary);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.default-banner-btn {
+  background: var(--surface-hover);
+  border: 0.5px solid var(--edge);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-enter);
+}
+.default-banner-btn:hover { background: var(--accent-glow); }
+.default-banner-btn.dismiss {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.default-banner-btn.dismiss:hover { color: var(--secondary); }
+
+/* ========================================
+   highlight.js overrides
+   ======================================== */
+
 [data-theme="light"] .hljs-keyword { color: oklch(45% 0.15 300); }
 [data-theme="light"] .hljs-string { color: oklch(42% 0.14 150); }
 [data-theme="light"] .hljs-title { color: oklch(40% 0.12 200); }
