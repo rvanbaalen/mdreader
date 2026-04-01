@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --mac",
-    "dist:zip": "electron-builder --mac zip"
+    "dist:zip": "electron-builder --mac zip --publish never"
   },
   "author": "Robin van Baalen",
   "license": "MIT",
