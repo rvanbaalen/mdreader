@@ -1,4 +1,8 @@
-node_modules/
-dist/
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
 .DS_Store
-*.dmg
+dist/
+node_modules/
