@@ -311,14 +311,19 @@ html, body {
   flex-shrink: 0;
   padding: var(--sp-md);
   padding-left: 0;
-  transition: width var(--dur-medium) var(--ease-enter), padding var(--dur-medium) var(--ease-enter), opacity var(--dur-medium) var(--ease-enter);
+  z-index: 10;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  transition: transform var(--dur-medium) var(--ease-enter), opacity var(--dur-medium) var(--ease-enter);
 }
 
 .toc.hidden {
-  width: 0;
-  padding: 0;
+  transform: translateX(240px);
   opacity: 0;
-  overflow: hidden;
+  pointer-events: none;
 }
 
 .toc-inner {
@@ -422,11 +427,14 @@ html, body {
   max-width: 720px;
   padding: var(--sp-2xl) var(--sp-3xl);
   margin: 0 auto;
+  transition: margin var(--dur-medium) var(--ease-enter);
 }
 
-.content.no-sidebar {
-  margin: 0 auto;
-}
+/* Shift content to account for floating panels */
+.reader.has-sidebar .content { margin-left: max(calc(50% - 360px), 280px); margin-right: auto; }
+.reader.has-toc .content { margin-right: max(calc(50% - 360px), 236px); margin-left: auto; }
+.reader.has-sidebar.has-toc .content { margin-left: max(calc(50% - 360px), 280px); margin-right: max(calc(50% - 360px), 236px); }
+.reader:not(.has-sidebar):not(.has-toc) .content { margin: 0 auto; }
 
 /* ========================================
    Typography — Markdown content

@@ -99,7 +99,7 @@ function getSidebarVisible() {
 function setSidebarVisible(visible) {
   localStorage.setItem(SIDEBAR_KEY, visible);
   sidebarEl.classList.toggle('hidden', !visible);
-  content.classList.toggle('no-sidebar', !visible);
+  $('reader').classList.toggle('has-sidebar', visible);
 }
 
 btnSidebar.addEventListener('click', () => setSidebarVisible(!getSidebarVisible()));
@@ -118,6 +118,7 @@ function getTocVisible() {
 function setTocVisible(visible) {
   localStorage.setItem(TOC_KEY, visible);
   tocEl.classList.toggle('hidden', !visible);
+  $('reader').classList.toggle('has-toc', visible);
 }
 
 btnToc.addEventListener('click', () => setTocVisible(!getTocVisible()));
