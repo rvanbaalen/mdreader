@@ -1,6 +1,6 @@
 {
   "name": "mdreader",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A beautiful macOS markdown reader",
   "main": "main.js",
   "scripts": {
