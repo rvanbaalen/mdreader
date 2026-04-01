@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/rvanbaalen/mdreader/compare/v1.0.3...v1.1.0) (2026-04-01)
+
+
+### Features
+
+* custom icon, about window, auto-updater, default app prompt ([4658f13](https://github.com/rvanbaalen/mdreader/commit/4658f13f0458831b709ee0b8daa5f7d7f5b4e9db))
+* ToC as floating panel, content adjusts for both panels ([0de885c](https://github.com/rvanbaalen/mdreader/commit/0de885c8373c792e4a9fded9a1bb1212a4ee421b))
+
+
+### Bug Fixes
+
+* ToC panel pushes content instead of overlaying ([9f1c980](https://github.com/rvanbaalen/mdreader/commit/9f1c980f4c2b8dd759ac23d57849a9d02c546da1))
+
 ## [1.0.3](https://github.com/rvanbaalen/mdreader/compare/v1.0.2...v1.0.3) (2026-04-01)
 
 
