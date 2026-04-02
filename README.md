@@ -1,88 +1,68 @@
 # mdreader
 
-A beautiful, native-feeling macOS markdown reader. Open any `.md` file and read it the way it was meant to be read.
+A beautiful, native macOS markdown reader. Open any `.md` file and read it the way it was meant to be read.
 
-![mdreader screenshot](screenshot.png)
+![mdreader](screenshot.png)
 
 ## Why
 
-Every markdown tool on macOS is either an editor that happens to render, or a basic viewer with zero design craft. mdreader is a reader, not an editor. It treats markdown as a first-class reading experience with proper typography, syntax highlighting, and a design that gets out of the way.
+Every markdown tool on macOS is either an editor that happens to render, or a basic viewer with zero design craft. mdreader is a **reader**, not an editor. It treats markdown as a first-class reading experience with proper typography, syntax highlighting, and a design that gets out of the way.
 
 ## Features
 
-- **Beautiful typography** — Lora serif for body text, DM Sans for UI, IBM Plex Mono for code
-- **Syntax highlighting** — powered by highlight.js with a custom color palette
-- **Dark, light, and system themes** — persisted across sessions
-- **Floating glassy sidebar** — file tree with Phosphor icons, collapsible with `Cmd+\`
-- **Table of contents** — auto-generated from headings, scroll tracking, toggle with `Cmd+Shift+O`
-- **Folder browsing** — open a directory and browse all markdown files
+- **Beautiful typography** — Lora serif for body, DM Sans for UI, IBM Plex Mono for code
+- **Syntax highlighting** — powered by highlight.js
+- **Dark and light mode** — defaults to your system preference
+- **File browser sidebar** — open a folder and browse all markdown files
+- **Table of contents** — auto-generated from headings with scroll tracking
+- **Source view** — toggle raw markdown with syntax coloring
+- **Click to copy** — inline code and code blocks, with toast notification
 - **Live reload** — file changes on disk are reflected instantly
 - **Drag and drop** — drop any `.md` file onto the window
-- **GFM support** — tables, task lists, strikethrough, autolinks
 
 ## Install
 
-### Homebrew (recommended)
+### Homebrew
 
 ```bash
 brew tap rvanbaalen/mdreader
-brew install --cask mdreader
+brew install mdreader
+sudo ln -sf $(brew --prefix)/opt/mdreader/mdreader.app /Applications/mdreader.app
 ```
 
-### Download
+### From source
 
-Grab the latest `.zip` from [GitHub Releases](https://github.com/rvanbaalen/mdreader/releases), extract it, and move `mdreader.app` to your Applications folder.
+```bash
+git clone https://github.com/rvanbaalen/mdreader.git
+cd mdreader
+./build.sh
+open mdreader.app
+```
 
 ## Usage
 
-Open the app and use `Cmd+O` to open a file, or `Cmd+Shift+O` to open a folder.
-
-From the terminal:
-
 ```bash
-# Open a file
+mdreader README.md
+mdreader ./docs
 open -a mdreader README.md
-
-# Open a folder
-open -a mdreader ./docs
 ```
+
+Or just open the app and use `⌘O` / `⌘⇧O`.
 
 ## Keyboard Shortcuts
 
 | Action | Shortcut |
 |--------|----------|
-| Open file | `Cmd+O` |
-| Open folder | `Cmd+Shift+O` |
-| Toggle sidebar | `Cmd+\` |
-| Toggle table of contents | `Cmd+Shift+O` |
-| Toggle theme | `Cmd+Shift+T` |
+| Open file | `⌘O` |
+| Open folder | `⌘⇧O` |
+| Toggle sidebar | `⌘\` |
+| Toggle table of contents | `⌘⇧E` |
+| Toggle source view | `⌘⇧S` |
+| Toggle theme | `⌘⇧T` |
 
-## Design
+## Architecture
 
-The design system is adapted from [robinvanbaalen.nl](https://robinvanbaalen.nl). Dark theme by default. Cool slate accent. Editorial serif typography. Glassy translucent panels. Subtle topographic background pattern. Everything transitions smoothly, nothing snaps.
-
-## Development
-
-```bash
-git clone https://github.com/rvanbaalen/mdreader.git
-cd mdreader
-npm install
-npm start
-```
-
-To open a file directly:
-
-```bash
-npm start -- /path/to/file.md
-```
-
-## Building
-
-```bash
-npm run dist:zip
-```
-
-Creates a universal `.zip` in `dist/`. No code signing required.
+Borderless `NSWindow` with a single `WKWebView`. All UI is HTML/CSS/JS. Swift handles file I/O, menus, and window management. Design system adapted from [robinvanbaalen.nl](https://robinvanbaalen.nl).
 
 ## License
 

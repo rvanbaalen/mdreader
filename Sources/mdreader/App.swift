@@ -6,6 +6,26 @@ import CoreServices
 @main
 struct MDReaderEntry {
     static func main() {
+        // If launched from a terminal, detach and re-launch as a GUI process
+        if isatty(STDIN_FILENO) == 1, ProcessInfo.processInfo.environment["MDREADER_LAUNCHED"] == nil {
+            var args = CommandLine.arguments
+            let execPath = args.removeFirst()
+            var env = ProcessInfo.processInfo.environment
+            env["MDREADER_LAUNCHED"] = "1"
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: execPath)
+            process.arguments = args
+            process.environment = env
+            // Detach from terminal
+            process.standardInput = FileHandle.nullDevice
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try? process.run()
+            // Parent exits immediately, returning the terminal
+            exit(0)
+        }
+
         _ = ResourceLoader.fontsRegistered
         let app = NSApplication.shared
         let delegate = AppDelegate()
