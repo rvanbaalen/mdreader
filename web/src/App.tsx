@@ -19,6 +19,7 @@ export default function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false)
   const [tocVisible, setTocVisible] = useState(false)
   const [sourceVisible, setSourceVisible] = useState(false)
+  const [fileDir, setFileDir] = useState<string | null>(null)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
 
   const setTheme = useCallback((t: 'dark' | 'light') => {
@@ -36,9 +37,10 @@ export default function App() {
     })
   }, [])
 
-  const openFile = useCallback((md: string, name: string, folder: string) => {
+  const openFile = useCallback((md: string, name: string, folder: string, dir?: string) => {
     setCurrentFile(name)
     if (folder) setCurrentFolder(folder)
+    if (dir) setFileDir(dir)
     setMarkdown(md)
     setSourceVisible(false)
   }, [])
@@ -89,7 +91,7 @@ export default function App() {
 
   const ctx = {
     theme, currentFile, currentFolder, markdown, headings, activeHeadingId,
-    sidebarVisible, tocVisible, sourceVisible, folderTree,
+    sidebarVisible, tocVisible, sourceVisible, fileDir, folderTree,
     setTheme, cycleTheme,
     toggleSidebar: () => setSidebarVisible(v => !v),
     toggleToc: () => setTocVisible(v => !v),
@@ -99,9 +101,9 @@ export default function App() {
 
   return (
     <AppContext.Provider value={ctx}>
-      <div className="flex flex-col h-screen bg-base">
+      <div className="relative h-screen bg-base">
         <TitleBar />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex h-full overflow-hidden">
           {currentFile ? (
             <>
               <Sidebar />

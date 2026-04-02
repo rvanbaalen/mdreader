@@ -100,7 +100,7 @@ export function Sidebar() {
 
   return (
     <div
-      className={`shrink-0 transition-all duration-300 ease-out ${sidebarVisible ? 'w-[276px] p-4 pr-0' : 'w-0 p-0 overflow-hidden opacity-0'}`}
+      className={`shrink-0 pt-12 pb-4 transition-all duration-300 ease-out ${sidebarVisible ? 'w-[276px] pl-4' : 'w-0 pl-0 overflow-hidden opacity-0'}`}
     >
       <div className="h-full rounded-xl border border-edge/40 bg-surface/60 backdrop-blur-[16px] py-6 overflow-y-auto">
         {currentFolder && (

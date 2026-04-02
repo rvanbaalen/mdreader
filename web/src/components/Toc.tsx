@@ -5,7 +5,7 @@ export function Toc() {
 
   return (
     <div
-      className={`shrink-0 transition-all duration-300 ease-out ${tocVisible ? 'w-[220px] p-4 pl-0' : 'w-0 p-0 overflow-hidden opacity-0'}`}
+      className={`shrink-0 pt-12 pb-4 transition-all duration-300 ease-out ${tocVisible ? 'w-[220px] pr-4' : 'w-0 pr-0 overflow-hidden opacity-0'}`}
     >
       <div className="h-full rounded-xl border border-edge/40 bg-surface/60 backdrop-blur-[16px] py-6 overflow-y-auto">
         <div className="px-6 pb-3 font-sans text-[11px] font-medium text-muted uppercase tracking-wider">

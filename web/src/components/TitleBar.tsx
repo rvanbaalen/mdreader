@@ -2,15 +2,6 @@ import { Sidebar, ListBullets, Code, Sun, Moon } from '@phosphor-icons/react'
 import { useApp } from '../hooks/useStore'
 import { postMessage } from '../lib/bridge'
 
-function TrafficLight({ color, action }: { color: string; action: string }) {
-  return (
-    <button
-      className={`w-3 h-3 rounded-full border-none cursor-pointer transition-opacity ${color}`}
-      onClick={() => postMessage(action)}
-    />
-  )
-}
-
 function IconButton({ children, onClick, active, title }: {
   children: React.ReactNode
   onClick: () => void
@@ -38,18 +29,12 @@ export function TitleBar() {
 
   return (
     <div
-      className="h-[38px] flex items-center px-3.5 shrink-0 bg-transparent select-none"
+      className="h-9.5 flex items-center pl-20 pr-3.5 select-none absolute top-0 left-0 right-0 z-10 bg-base/70 backdrop-blur-md"
       onMouseDown={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
         postMessage('startDrag')
       }}
     >
-      <div className="flex gap-2 pl-1.5 shrink-0 animate-[fadeIn_0.4s_ease-out]">
-        <TrafficLight color="bg-[#ff5f57]" action="close" />
-        <TrafficLight color="bg-[#febc2e]" action="minimize" />
-        <TrafficLight color="bg-[#28c840]" action="zoom" />
-      </div>
-
       <div className="flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap font-sans text-xs text-muted">
         {currentFile && (
           <>

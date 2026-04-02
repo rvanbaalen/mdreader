@@ -27,7 +27,8 @@ export interface AppState {
   toggleSource: () => void
   setHeadings: (h: Heading[]) => void
   setActiveHeading: (id: string) => void
-  openFile: (md: string, name: string, folder: string) => void
+  fileDir: string | null
+  openFile: (md: string, name: string, folder: string, dir?: string) => void
   openFolder: (name: string, tree: FileNode[]) => void
   updateContent: (md: string) => void
 }
