@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/rvanbaalen/mdreader/compare/v1.5.1...v1.5.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* restore allowFileAccessFromFileURLs for WKWebView module loading ([63e649e](https://github.com/rvanbaalen/mdreader/commit/63e649e8516e769648e4e6ae8379a6577500d960))
+
 ## [1.5.1](https://github.com/rvanbaalen/mdreader/compare/v1.5.0...v1.5.1) (2026-04-02)
 
 
