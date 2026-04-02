@@ -6,3 +6,5 @@ DerivedData/
 .DS_Store
 dist/
 node_modules/
+.gstack/
+mdreader.app/

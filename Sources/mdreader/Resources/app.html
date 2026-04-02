@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<style>/*STYLE*/</style>
+<script>/*MARKED*/</script>
+<script>/*HLJS*/</script>
+<script>/*PURIFY*/</script>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar" id="titlebar">
+    <div class="traffic-lights">
+      <button class="tl tl-close" onclick="window.webkit.messageHandlers.app.postMessage({action:'close'})"></button>
+      <button class="tl tl-minimize" onclick="window.webkit.messageHandlers.app.postMessage({action:'minimize'})"></button>
+      <button class="tl tl-zoom" onclick="window.webkit.messageHandlers.app.postMessage({action:'zoom'})"></button>
+    </div>
+    <div class="titlebar-center" id="titlebar-path"></div>
+    <div class="titlebar-actions">
+      <button class="titlebar-btn" id="btn-sidebar" style="display:none" onclick="app.toggleSidebar()">
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><rect x="32" y="48" width="192" height="160" rx="16"/><line x1="96" y1="48" x2="96" y2="208"/></svg>
+      </button>
+      <button class="titlebar-btn" id="btn-source" style="display:none" onclick="app.toggleSource()" title="View source">
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><polyline points="64 88 16 128 64 168"/><polyline points="192 88 240 128 192 168"/><line x1="160" y1="40" x2="96" y2="216"/></svg>
+      </button>
+      <button class="titlebar-btn" id="btn-toc" style="display:none" onclick="app.toggleToc()">
+        <svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><line x1="40" y1="64" x2="216" y2="64"/><line x1="40" y1="128" x2="216" y2="128"/><line x1="40" y1="192" x2="216" y2="192"/></svg>
+      </button>
+      <button class="titlebar-btn" id="btn-theme" onclick="app.cycleTheme()">
+        <svg id="icon-sun" width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="128" r="60"/><line x1="128" y1="28" x2="128" y2="48"/><line x1="128" y1="208" x2="128" y2="228"/><line x1="57" y1="57" x2="71" y2="71"/><line x1="185" y1="185" x2="199" y2="199"/><line x1="28" y1="128" x2="48" y2="128"/><line x1="208" y1="128" x2="228" y2="128"/><line x1="57" y1="199" x2="71" y2="185"/><line x1="185" y1="71" x2="199" y2="57"/></svg>
+        <svg id="icon-moon" width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M216 120A88 88 0 0 1 120 40a80 80 0 1 0 96 80Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="main-layout">
+    <aside class="sidebar hidden" id="sidebar"></aside>
+    <main class="reader" id="reader">
+      <div class="welcome" id="welcome">
+        <h1 class="welcome-title">mdreader</h1>
+        <p class="welcome-subtitle">A beautiful markdown reader</p>
+        <div class="welcome-actions">
+          <button class="welcome-btn" onclick="app.nativeAction('openFile')"><span>Open File</span><kbd>⌘O</kbd></button>
+          <button class="welcome-btn" onclick="app.nativeAction('openFolder')"><span>Open Folder</span><kbd>⌘⇧O</kbd></button>
+        </div>
+        <p class="welcome-hint">or drag a .md file anywhere</p>
+        <div class="default-banner" id="default-banner" style="display:none">
+          <span>Set mdreader as your default markdown reader?</span>
+          <button class="default-banner-btn" onclick="app.setDefaultApp()">Yes</button>
+          <button class="default-banner-btn dismiss" onclick="app.dismissDefaultBanner()">No thanks</button>
+        </div>
+      </div>
+      <article class="content" id="content" style="display:none"></article>
+      <pre class="source-view" id="source-view" style="display:none"></pre>
+    </main>
+    <aside class="toc hidden" id="toc"></aside>
+  </div>
+
+<script>
+// ── Marked config ──
+var mdRenderer = new marked.Renderer();
+mdRenderer.code = function(opts) {
+  var text = opts.text, lang = opts.lang;
+  var hl = lang && hljs.getLanguage(lang) ? hljs.highlight(text, {language:lang}).value : hljs.highlightAuto(text).value;
+  var la = lang ? ' data-lang="'+lang+'"' : '';
+  var esc = text.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+  return '<pre'+la+'><button class="copy-btn" data-code="'+esc+'"><svg width="14" height="14" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><polyline points="168 168 216 168 216 40 88 40 88 88"/><rect x="40" y="88" width="128" height="128" rx="8"/></svg></button><code class="hljs">'+hl+'</code></pre>';
+};
+marked.use({renderer:mdRenderer, gfm:true, breaks:false});
+
+function safeRender(md) {
+  return DOMPurify.sanitize(marked.parse(md), {
+    ADD_TAGS:['input','button'],
+    ADD_ATTR:['type','checked','disabled','data-lang','data-code','class']
+  });
+}
+
+function setContentHTML(el, html) {
+  while(el.firstChild) el.removeChild(el.firstChild);
+  var tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  el.appendChild(tpl.content);
+  el.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { copyCode(btn); });
+  });
+  // Click-to-copy on inline code
+  el.querySelectorAll('code:not(.hljs)').forEach(function(code) {
+    code.style.cursor = 'pointer';
+    code.title = 'Click to copy';
+    code.addEventListener('click', function() {
+      navigator.clipboard.writeText(code.textContent).then(function() {
+        code.classList.add('copied-inline');
+        setTimeout(function() { code.classList.remove('copied-inline'); }, 1500);
+        app.showToast('Copied to clipboard');
+      });
+    });
+  });
+}
+
+// ── App controller ──
+var app = {
+  sidebarVisible: false,
+  tocVisible: false,
+  themeMode: 'dark',
+
+  currentFilePath: null,
+
+  openFile: function(md, name, folder) {
+    document.getElementById('welcome').style.display = 'none';
+    var el = document.getElementById('content');
+    el.style.display = 'block';
+    el.classList.remove('animate');
+    setContentHTML(el, safeRender(md));
+    void el.offsetWidth;
+    el.classList.add('animate');
+    document.getElementById('titlebar-path').textContent = folder ? folder + ' / ' + name : name;
+    document.getElementById('btn-toc').style.display = '';
+    document.getElementById('btn-source').style.display = '';
+    this.rawMarkdown = md;
+    // If source view was on, update it
+    if (this.sourceVisible) {
+      document.getElementById('source-view').textContent = md;
+    }
+    this.buildToc();
+    // Update active file in sidebar
+    this.currentFilePath = name;
+    this._updateActiveFile();
+  },
+
+  _updateActiveFile: function() {
+    document.querySelectorAll('.tree-file').forEach(function(el) {
+      var isActive = el.getAttribute('data-name') === app.currentFilePath;
+      el.classList.toggle('active', isActive);
+    });
+  },
+
+  updateContent: function(md) {
+    this.rawMarkdown = md;
+    if (this.sourceVisible) {
+      var sv = document.getElementById('source-view');
+      sv.textContent = '';
+      var tpl = document.createElement('template');
+      tpl.innerHTML = this._highlightMarkdown(md);
+      sv.appendChild(tpl.content);
+      return;
+    }
+    var el = document.getElementById('content');
+    var scrollTop = document.getElementById('reader').scrollTop;
+    setContentHTML(el, safeRender(md));
+    document.getElementById('reader').scrollTop = scrollTop;
+    this.buildToc();
+  },
+
+  openFolder: function(name, tree) {
+    document.getElementById('btn-sidebar').style.display = '';
+    this.renderSidebar(tree, name);
+    if (!this.sidebarVisible) this.toggleSidebar();
+  },
+
+  setTheme: function(mode) {
+    this.themeMode = mode;
+    document.documentElement.dataset.theme = mode;
+    document.getElementById('icon-sun').style.display = mode==='dark' ? '' : 'none';
+    document.getElementById('icon-moon').style.display = mode==='light' ? '' : 'none';
+  },
+
+  cycleTheme: function() {
+    var next = this.themeMode === 'dark' ? 'light' : 'dark';
+    this.setTheme(next);
+    window.webkit.messageHandlers.app.postMessage({action:'setTheme',mode:next});
+  },
+
+  sourceVisible: false,
+  rawMarkdown: '',
+
+  toggleSource: function() {
+    this.sourceVisible = !this.sourceVisible;
+    var content = document.getElementById('content');
+    var source = document.getElementById('source-view');
+    var btn = document.getElementById('btn-source');
+    if (this.sourceVisible) {
+      content.style.display = 'none';
+      source.style.display = 'block';
+      source.textContent = '';
+      var tpl = document.createElement('template');
+      tpl.innerHTML = this._highlightMarkdown(this.rawMarkdown);
+      source.appendChild(tpl.content);
+      btn.classList.add('active');
+    } else {
+      source.style.display = 'none';
+      content.style.display = 'block';
+      btn.classList.remove('active');
+    }
+  },
+
+  _highlightMarkdown: function(md) {
+    // Escape HTML first
+    var esc = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Apply syntax classes (order matters — fences first to avoid inner matching)
+    esc = esc.replace(/(^```[\s\S]*?^```)/gm, '<span class="md-fence">$1</span>');
+    esc = esc.replace(/(^#{1,6}\s.+)$/gm, '<span class="md-heading">$1</span>');
+    esc = esc.replace(/(^&gt;\s.+)$/gm, '<span class="md-blockquote">$1</span>');
+    esc = esc.replace(/(^---$|^\*\*\*$|^___$)/gm, '<span class="md-hr">$1</span>');
+    esc = esc.replace(/(^[\s]*[-*+]\s)/gm, '<span class="md-list">$1</span>');
+    esc = esc.replace(/(^[\s]*\d+\.\s)/gm, '<span class="md-list">$1</span>');
+    esc = esc.replace(/(`[^`\n]+`)/g, '<span class="md-code">$1</span>');
+    esc = esc.replace(/(\*\*[^*]+\*\*|__[^_]+__)/g, '<span class="md-bold">$1</span>');
+    esc = esc.replace(/(\*[^*\n]+\*|_[^_\n]+_)/g, '<span class="md-italic">$1</span>');
+    esc = esc.replace(/(\[[^\]]+\])/g, '<span class="md-link">$1</span>');
+    esc = esc.replace(/(\([^)]*https?:[^)]+\))/g, '<span class="md-url">$1</span>');
+    return esc;
+  },
+
+  toggleSidebar: function() {
+    this.sidebarVisible = !this.sidebarVisible;
+    document.getElementById('sidebar').classList.toggle('hidden', !this.sidebarVisible);
+  },
+
+  toggleToc: function() {
+    this.tocVisible = !this.tocVisible;
+    document.getElementById('toc').classList.toggle('hidden', !this.tocVisible);
+  },
+
+  nativeAction: function(action) {
+    window.webkit.messageHandlers.app.postMessage({action:action});
+  },
+
+  showDefaultBanner: function() {
+    document.getElementById('default-banner').style.display = '';
+  },
+
+  setDefaultApp: function() {
+    document.getElementById('default-banner').style.display = 'none';
+    window.webkit.messageHandlers.app.postMessage({action:'setDefaultApp'});
+  },
+
+  dismissDefaultBanner: function() {
+    document.getElementById('default-banner').style.display = 'none';
+    window.webkit.messageHandlers.app.postMessage({action:'dismissDefaultBanner'});
+  },
+
+  buildToc: function() {
+    var tocEl = document.getElementById('toc');
+    tocEl.textContent = '';
+    var label = document.createElement('div');
+    label.className = 'toc-label';
+    label.textContent = 'ON THIS PAGE';
+    tocEl.appendChild(label);
+    document.querySelectorAll('#content h1, #content h2, #content h3, #content h4').forEach(function(h, i) {
+      h.id = 'h-' + i;
+      var btn = document.createElement('button');
+      btn.className = 'toc-item depth-' + h.tagName[1];
+      btn.textContent = h.textContent;
+      btn.addEventListener('click', function() { h.scrollIntoView({behavior:'smooth',block:'start'}); });
+      tocEl.appendChild(btn);
+    });
+  },
+
+  renderSidebar: function(tree, rootName) {
+    var sb = document.getElementById('sidebar');
+    sb.textContent = '';
+    var inner = document.createElement('div');
+    inner.className = 'sidebar-inner';
+    var label = document.createElement('div');
+    label.className = 'sidebar-section-label';
+    label.textContent = rootName;
+    inner.appendChild(label);
+    this._buildTree(tree, inner, 0);
+    sb.appendChild(inner);
+  },
+
+  _buildTree: function(nodes, container, depth) {
+    var self = this;
+    nodes.forEach(function(node) {
+      var svgFolder = '<svg width="16" height="16" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72Z"/></svg>';
+      var svgFolderOpen = '<svg width="16" height="16" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M228.42,136H69.58a8,8,0,0,0-7.72,5.91L42,216"/><path d="M216,72H131.31L104,44.69A15.86,15.86,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.4,15.4,0,0,0,39.38,216H216.89A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72Z"/></svg>';
+      var svgFile = '<svg width="16" height="16" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M200,224H56a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h96l56,56V216A8,8,0,0,1,200,224Z"/><polyline points="152 32 152 88 208 88"/><line x1="96" y1="136" x2="160" y2="136"/><line x1="96" y1="168" x2="160" y2="168"/></svg>';
+      var svgChevron = '<svg width="10" height="10" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><polyline points="96 48 176 128 96 208"/></svg>';
+
+      if (node.isDir) {
+        var row = document.createElement('button');
+        row.className = 'tree-folder';
+        var chev = document.createElement('span'); chev.className = 'tree-chevron'; chev.innerHTML = svgChevron;
+        var icon = document.createElement('span'); icon.className = 'tree-icon'; icon.innerHTML = svgFolder;
+        var name = document.createElement('span'); name.className = 'tree-name'; name.textContent = node.name;
+        row.appendChild(chev); row.appendChild(icon); row.appendChild(name);
+        container.appendChild(row);
+        var children = document.createElement('div'); children.className = 'tree-children collapsed';
+        self._buildTree(node.children, children, depth+1);
+        container.appendChild(children);
+        row.addEventListener('click', function() {
+          children.classList.toggle('collapsed');
+          row.classList.toggle('open');
+          icon.innerHTML = row.classList.contains('open') ? svgFolderOpen : svgFolder;
+        });
+      } else {
+        var btn = document.createElement('button');
+        btn.className = 'tree-file';
+        btn.setAttribute('data-name', node.name);
+        if (node.name === app.currentFilePath) btn.classList.add('active');
+        var ficon = document.createElement('span'); ficon.className = 'tree-icon'; ficon.innerHTML = svgFile;
+        var fname = document.createElement('span'); fname.className = 'tree-name'; fname.textContent = node.name;
+        btn.appendChild(ficon); btn.appendChild(fname);
+        // Tooltip for truncated names
+        btn.addEventListener('mouseenter', function() {
+          if (fname.scrollWidth > fname.clientWidth) {
+            var existing = btn.querySelector('.tree-name-tooltip');
+            if (!existing) {
+              var tip = document.createElement('span'); tip.className = 'tree-name-tooltip';
+              tip.textContent = node.name; fname.appendChild(tip);
+            }
+          }
+        });
+        btn.addEventListener('mouseleave', function() {
+          var tip = btn.querySelector('.tree-name-tooltip');
+          if (tip) tip.remove();
+        });
+        (function(p) {
+          btn.addEventListener('click', function() {
+            window.webkit.messageHandlers.app.postMessage({action:'openFilePath',path:p});
+          });
+        })(node.path);
+        container.appendChild(btn);
+      }
+    });
+  }
+};
+
+app.showToast = function(msg) {
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.classList.add('show'); }, 10);
+  setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 3000);
+};
+
+function copyCode(btn) {
+  var code = btn.getAttribute('data-code').replace(/&amp;/g,'&').replace(/&quot;/g,'"');
+  navigator.clipboard.writeText(code).then(function() {
+    btn.classList.add('copied');
+    setTimeout(function() { btn.classList.remove('copied'); }, 2000);
+    app.showToast('Copied to clipboard');
+  });
+}
+
+// Titlebar window dragging
+document.getElementById('titlebar').addEventListener('mousedown', function(e) {
+  // Don't drag if clicking on a button or traffic light
+  if (e.target.closest('.titlebar-btn') || e.target.closest('.tl') || e.target.closest('.titlebar-actions')) return;
+  window.webkit.messageHandlers.app.postMessage({action:'startDrag'});
+});
+
+document.addEventListener('dragover', function(e){e.preventDefault()});
+document.addEventListener('drop', function(e){
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) window.webkit.messageHandlers.app.postMessage({action:'openFilePath',path:e.dataTransfer.files[0].path});
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+  window.webkit.messageHandlers.app.postMessage({action:'ready'});
+});
+</script>
+</body>
+</html>
