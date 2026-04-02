@@ -3,7 +3,9 @@
     ".": {
       "release-type": "simple",
       "bump-minor-pre-major": true,
-      "extra-files": []
+      "extra-files": [
+        "build.sh"
+      ]
     }
   }
 }

@@ -5,9 +5,8 @@ APP_NAME="mdreader"
 BUNDLE="$APP_NAME.app"
 CONFIG="${1:-release}"
 
-# Get version from git
-VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-VERSION="${VERSION#v}" # strip leading v
+# Version — updated automatically by release-please
+VERSION="1.2.2" # x-release-please-version
 COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 
