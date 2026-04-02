@@ -61,6 +61,7 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
 
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "app")
+        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         config.setURLSchemeHandler(LocalFileHandler(), forURLScheme: "mdfile")
 
         webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
