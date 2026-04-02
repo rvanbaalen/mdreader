@@ -26,6 +26,9 @@ fi
 
 echo "$COMMIT" > "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/build-info.txt"
 
+# Copy CHANGELOG for post-update display
+[ -f "CHANGELOG.md" ] && cp CHANGELOG.md "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/CHANGELOG.md"
+
 # Copy icons
 [ -f "build/icon.icns" ] && cp "build/icon.icns" "$BUNDLE/Contents/Resources/AppIcon.icns"
 [ -f "build/doc.icns" ] && cp "build/doc.icns" "$BUNDLE/Contents/Resources/DocIcon.icns"

@@ -159,6 +159,10 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
             if let event = NSApplication.shared.currentEvent {
                 window.performDrag(with: event)
             }
+        case "installUpdate":
+            AppDelegate.shared.runBrewUpgrade(from: self)
+        case "restartApp":
+            AppDelegate.shared.restartApp()
         case "setDefaultApp":
             UserDefaults.standard.set(true, forKey: "defaultAppAsked")
             AppDelegate.shared.setAsDefaultApp(from: self)
@@ -260,6 +264,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             wc.pendingFile = URL(fileURLWithPath: CommandLine.arguments[1])
         }
         NSRunningApplication.current.activate()
+
+        // Show changelog once after update
+        showChangelogIfUpdated(in: wc)
+
+        // Check for updates in background
+        checkForUpdates()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -304,6 +314,94 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func keyWindowController() -> WindowController? {
         let key = NSApplication.shared.keyWindow
         return windowControllers.first { $0.window === key }
+    }
+
+    // MARK: - Update check
+
+    private var currentVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
+    }
+
+    func checkForUpdates() {
+        guard let url = URL(string: "https://api.github.com/repos/rvanbaalen/mdreader/releases/latest") else { return }
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+            guard let self, let data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let tagName = json["tag_name"] as? String else { return }
+            let latest = tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
+            guard latest != self.currentVersion, self.isNewer(latest, than: self.currentVersion) else { return }
+            DispatchQueue.main.async {
+                if let wc = self.windowControllers.first(where: { $0.webReady }) {
+                    wc.webView.evaluateJavaScript("app.showUpdateBanner('\(self.currentVersion)', '\(latest)')")
+                }
+            }
+        }.resume()
+    }
+
+    private func isNewer(_ a: String, than b: String) -> Bool {
+        let pa = a.split(separator: ".").compactMap { Int($0) }
+        let pb = b.split(separator: ".").compactMap { Int($0) }
+        for i in 0..<max(pa.count, pb.count) {
+            let va = i < pa.count ? pa[i] : 0
+            let vb = i < pb.count ? pb[i] : 0
+            if va > vb { return true }
+            if va < vb { return false }
+        }
+        return false
+    }
+
+    // MARK: - Post-update changelog
+
+    func showChangelogIfUpdated(in wc: WindowController) {
+        let key = "lastSeenVersion"
+        let lastSeen = UserDefaults.standard.string(forKey: key)
+        let current = currentVersion
+        guard current != "dev", lastSeen != nil, lastSeen != current else {
+            UserDefaults.standard.set(current, forKey: key)
+            return
+        }
+        // Version changed — show changelog once
+        UserDefaults.standard.set(current, forKey: key)
+        if let changelogURL = ResourceLoader.url(forResource: "CHANGELOG.md") {
+            wc.pendingFile = changelogURL
+        }
+    }
+
+    // MARK: - Brew upgrade
+
+    func runBrewUpgrade(from wc: WindowController) {
+        let brewPaths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew", "/home/linuxbrew/.linuxbrew/bin/brew"]
+        guard let brew = brewPaths.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
+            // No brew found — open GitHub releases as fallback
+            if let url = URL(string: "https://github.com/rvanbaalen/mdreader/releases/latest") {
+                NSWorkspace.shared.open(url)
+            }
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/sh")
+            process.arguments = ["-c", "\(brew) update && \(brew) upgrade rvanbaalen/tap/mdreader"]
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try? process.run()
+            process.waitUntilExit()
+            DispatchQueue.main.async {
+                wc.webView.evaluateJavaScript("window.__updateComplete?.()")
+            }
+        }
+    }
+
+    func restartApp() {
+        let appPath = Bundle.main.bundleURL.path
+        // Delay relaunch so the current instance fully quits first
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", "sleep 1 && open \"\(appPath)\""]
+        try? task.run()
+        NSApplication.shared.terminate(nil)
     }
 
     // MARK: - Default app

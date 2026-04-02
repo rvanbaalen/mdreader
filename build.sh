@@ -46,6 +46,11 @@ if [ -d "web/dist" ]; then
     cp -R web/dist "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/dist"
 fi
 
+# Copy CHANGELOG for post-update display
+if [ -f "CHANGELOG.md" ]; then
+    cp CHANGELOG.md "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/CHANGELOG.md"
+fi
+
 # Copy icons
 if [ -f "build/icon.icns" ]; then
     cp "build/icon.icns" "$BUNDLE/Contents/Resources/AppIcon.icns"
