@@ -35,7 +35,9 @@ struct MDReaderEntry {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
+// MARK: - WindowController (per-window state)
+
+class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, NSWindowDelegate {
     var window: NSWindow!
     var webView: WKWebView!
     var currentFile: URL?
@@ -44,32 +46,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
     var webReady = false
     var pendingFile: URL?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        if let url = ResourceLoader.url(forResource: "icon.icns"),
-           let icon = NSImage(contentsOf: url) {
-            NSApplication.shared.applicationIconImage = icon
-        }
-
-        // Borderless window — just a rectangle
+    func setup() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1060, height: 720),
             styleMask: [.borderless, .resizable, .miniaturizable, .closable],
             backing: .buffered, defer: false
         )
+        window.delegate = self
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
         window.minSize = NSSize(width: 600, height: 400)
-        window.center()
         window.isMovableByWindowBackground = false
 
-        // Rounded corners on the content view
         window.contentView!.wantsLayer = true
         window.contentView!.layer?.cornerRadius = 10
         window.contentView!.layer?.masksToBounds = true
         window.contentView!.layer?.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1).cgColor
 
-        // WKWebView fills the entire window
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "app")
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
@@ -78,41 +72,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         webView.autoresizingMask = [.width, .height]
         webView.setValue(false, forKey: "drawsBackground")
         webView.navigationDelegate = self
-        // Enable native momentum scrolling
         webView.enclosingScrollView?.scrollerStyle = .overlay
         webView.enclosingScrollView?.hasVerticalScroller = true
         webView.enclosingScrollView?.verticalScrollElasticity = .allowed
         window.contentView!.addSubview(webView)
 
-        // Load UI — Vite dev server or bundled dist
         if ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1" {
             webView.load(URLRequest(url: URL(string: "http://localhost:5173")!))
         } else if let distIndex = ResourceLoader.url(forResource: "dist/index.html") {
-            // Production: load Vite build output
             webView.loadFileURL(distIndex, allowingReadAccessTo: ResourceLoader.bundle.bundleURL)
         } else {
-            // Fallback: old app.html
             let html = buildHTML()
             let bundleParent = ResourceLoader.bundle.bundleURL.deletingLastPathComponent()
             let tempHTML = bundleParent.appendingPathComponent("mdreader_ui.html")
             try? html.data(using: .utf8)?.write(to: tempHTML)
             webView.loadFileURL(tempHTML, allowingReadAccessTo: bundleParent)
         }
-
-        window.makeKeyAndOrderFront(nil)
-        NSRunningApplication.current.activate()
-
-        if CommandLine.arguments.count > 1 {
-            pendingFile = URL(fileURLWithPath: CommandLine.arguments[1])
-        }
-        setupMenu()
-    }
-
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
-
-    func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first else { return }
-        if webReady { openFile(url) } else { pendingFile = url }
     }
 
     // MARK: - File ops
@@ -187,7 +162,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         case "setTheme":
             if let m = body["mode"] as? String { UserDefaults.standard.set(m, forKey: "themeMode") }
         case "startDrag":
-            // JS detected mousedown on the titlebar area — start native window drag
             if let event = NSApplication.shared.currentEvent {
                 window.performDrag(with: event)
             }
@@ -199,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
             window.zoom(nil)
         case "setDefaultApp":
             UserDefaults.standard.set(true, forKey: "defaultAppAsked")
-            setAsDefaultApp()
+            AppDelegate.shared.setAsDefaultApp(from: self)
         case "dismissDefaultBanner":
             UserDefaults.standard.set(true, forKey: "defaultAppAsked")
         case "ready":
@@ -212,7 +186,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
                 theme = isDark ? "dark" : "light"
             }
             webView.evaluateJavaScript("app.setTheme('\(theme)')")
-            // Check default app (only once)
             if !UserDefaults.standard.bool(forKey: "defaultAppAsked") {
                 checkDefaultApp()
             }
@@ -233,43 +206,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         if let url = navigationAction.request.url {
             let scheme = url.scheme ?? ""
             let host = url.host ?? ""
-            // Allow: file://, about:, localhost (Vite dev), ws:// (HMR)
             if scheme == "file" || scheme == "about" || scheme == "ws" || scheme == "wss"
                 || host == "localhost" || host == "127.0.0.1" {
                 decisionHandler(.allow)
                 return
             }
-            // External URL — open in default browser
             NSWorkspace.shared.open(url)
             decisionHandler(.cancel)
             return
         }
         decisionHandler(.allow)
-    }
-
-    func setAsDefaultApp() {
-        let appURL = Bundle.main.bundleURL
-        // Register with LaunchServices first
-        LSRegisterURL(appURL as CFURL, true)
-
-        guard let mdType = UTType(filenameExtension: "md") else { return }
-        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpen: mdType) { [weak self] error in
-            DispatchQueue.main.async {
-                if let error {
-                    let alert = NSAlert()
-                    alert.messageText = "Couldn't set default"
-                    alert.informativeText = "To set manually:\n1. Right-click any .md file in Finder\n2. Click \"Get Info\"\n3. Under \"Open with\", select mdreader\n4. Click \"Change All...\"\n\n(\(error.localizedDescription))"
-                    alert.alertStyle = .informational
-                    alert.runModal()
-                } else {
-                    // Also set for .markdown extension
-                    if let markdownType = UTType(filenameExtension: "markdown") {
-                        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpen: markdownType) { _ in }
-                    }
-                    self?.webView.evaluateJavaScript("app.showToast('mdreader is now your default markdown reader')")
-                }
-            }
-        }
     }
 
     func checkDefaultApp() {
@@ -294,6 +240,109 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         return html
     }
 
+    // MARK: - NSWindowDelegate
+
+    func windowWillClose(_ notification: Notification) {
+        watcher?.cancel()
+        DispatchQueue.main.async { [self] in
+            AppDelegate.shared.windowDidClose(self)
+        }
+    }
+}
+
+// MARK: - AppDelegate (window manager)
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    static var shared: AppDelegate!
+    var windowControllers: [WindowController] = []
+    private var cascadePoint = NSPoint.zero
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        Self.shared = self
+
+        if let url = ResourceLoader.url(forResource: "icon.icns"),
+           let icon = NSImage(contentsOf: url) {
+            NSApplication.shared.applicationIconImage = icon
+        }
+
+        setupMenu()
+
+        let wc = createWindow(center: true)
+        if CommandLine.arguments.count > 1 {
+            wc.pendingFile = URL(fileURLWithPath: CommandLine.arguments[1])
+        }
+        NSRunningApplication.current.activate()
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { createWindow(center: true) }
+        return true
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            // Reuse an empty window if one exists
+            if let wc = windowControllers.first(where: { $0.currentFile == nil && $0.webReady }) {
+                var isDir: ObjCBool = false
+                if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
+                    if isDir.boolValue { wc.openFolder(url) } else { wc.openFile(url) }
+                }
+            } else {
+                let wc = createWindow()
+                wc.pendingFile = url
+            }
+        }
+    }
+
+    @discardableResult
+    func createWindow(center: Bool = false) -> WindowController {
+        let wc = WindowController()
+        wc.setup()
+        windowControllers.append(wc)
+        if center {
+            wc.window.center()
+        }
+        cascadePoint = wc.window.cascadeTopLeft(from: cascadePoint)
+        wc.window.makeKeyAndOrderFront(nil)
+        return wc
+    }
+
+    func windowDidClose(_ wc: WindowController) {
+        windowControllers.removeAll { $0 === wc }
+    }
+
+    func keyWindowController() -> WindowController? {
+        let key = NSApplication.shared.keyWindow
+        return windowControllers.first { $0.window === key }
+    }
+
+    // MARK: - Default app
+
+    func setAsDefaultApp(from wc: WindowController) {
+        let appURL = Bundle.main.bundleURL
+        LSRegisterURL(appURL as CFURL, true)
+
+        guard let mdType = UTType(filenameExtension: "md") else { return }
+        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpen: mdType) { error in
+            DispatchQueue.main.async {
+                if let error {
+                    let alert = NSAlert()
+                    alert.messageText = "Couldn't set default"
+                    alert.informativeText = "To set manually:\n1. Right-click any .md file in Finder\n2. Click \"Get Info\"\n3. Under \"Open with\", select mdreader\n4. Click \"Change All...\"\n\n(\(error.localizedDescription))"
+                    alert.alertStyle = .informational
+                    alert.runModal()
+                } else {
+                    if let markdownType = UTType(filenameExtension: "markdown") {
+                        NSWorkspace.shared.setDefaultApplication(at: appURL, toOpen: markdownType) { _ in }
+                    }
+                    wc.webView.evaluateJavaScript("app.showToast('mdreader is now your default markdown reader')")
+                }
+            }
+        }
+    }
+
     // MARK: - Menu
 
     func setupMenu() {
@@ -307,10 +356,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         appMenu.submenu = appSub; menu.addItem(appMenu)
 
         let fileMenu = NSMenuItem(); let fileSub = NSMenu(title: "File")
+        let newWindowItem = NSMenuItem(title: "New Window", action: #selector(menuNewWindow), keyEquivalent: "n")
+        newWindowItem.target = self; fileSub.addItem(newWindowItem)
+        fileSub.addItem(.separator())
         let openFileItem = NSMenuItem(title: "Open File...", action: #selector(menuOpenFile), keyEquivalent: "o")
         openFileItem.target = self; fileSub.addItem(openFileItem)
         let openFolderItem = NSMenuItem(title: "Open Folder...", action: #selector(menuOpenFolder), keyEquivalent: "O")
         openFolderItem.target = self; fileSub.addItem(openFolderItem)
+        fileSub.addItem(.separator())
+        let closeItem = NSMenuItem(title: "Close Window", action: #selector(menuCloseWindow), keyEquivalent: "w")
+        closeItem.target = self; fileSub.addItem(closeItem)
         fileMenu.submenu = fileSub; menu.addItem(fileMenu)
 
         let viewMenu = NSMenuItem(); let viewSub = NSMenu(title: "View")
@@ -330,21 +385,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         NSApplication.shared.mainMenu = menu
     }
 
+    @objc func menuNewWindow() { createWindow() }
+    @objc func menuCloseWindow() { NSApplication.shared.keyWindow?.close() }
+
     @objc func menuOpenFile() {
+        let wc = keyWindowController() ?? createWindow()
         let panel = NSOpenPanel()
         panel.allowsOtherFileTypes = true
         panel.allowedContentTypes = [UTType(filenameExtension: "md"), UTType(filenameExtension: "markdown"), .plainText].compactMap { $0 }
-        if panel.runModal() == .OK, let url = panel.url { openFile(url) }
+        if panel.runModal() == .OK, let url = panel.url { wc.openFile(url) }
     }
+
     @objc func menuOpenFolder() {
+        let wc = keyWindowController() ?? createWindow()
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true; panel.canChooseFiles = false
-        if panel.runModal() == .OK, let url = panel.url { openFolder(url) }
+        if panel.runModal() == .OK, let url = panel.url { wc.openFolder(url) }
     }
-    @objc func menuSetDefault() { setAsDefaultApp() }
-    @objc func menuToggleSidebar() { webView.evaluateJavaScript("app.toggleSidebar()") }
-    @objc func menuToggleToc() { webView.evaluateJavaScript("app.toggleToc()") }
-    @objc func menuToggleTheme() { webView.evaluateJavaScript("app.cycleTheme()") }
+
+    @objc func menuSetDefault() {
+        if let wc = keyWindowController() { setAsDefaultApp(from: wc) }
+    }
+    @objc func menuToggleSidebar() { keyWindowController()?.webView.evaluateJavaScript("app.toggleSidebar()") }
+    @objc func menuToggleToc() { keyWindowController()?.webView.evaluateJavaScript("app.toggleToc()") }
+    @objc func menuToggleTheme() { keyWindowController()?.webView.evaluateJavaScript("app.cycleTheme()") }
 
     @objc func showAbout() {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
