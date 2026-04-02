@@ -1,4 +1,4 @@
-import { Sidebar, ListBullets, Code, Sun, Moon } from '@phosphor-icons/react'
+import { SidebarIcon, ListBulletsIcon, CodeIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import { useApp } from '../hooks/useStore'
 import { postMessage } from '../lib/bridge'
 
@@ -47,21 +47,21 @@ export function TitleBar() {
       <div className="flex gap-0.5">
         {hasFile && hasFolder && (
           <IconButton onClick={toggleSidebar} active={sidebarVisible} title="Toggle Sidebar (⌘\)">
-            <Sidebar size={14} />
+            <SidebarIcon size={14} />
           </IconButton>
         )}
         {hasFile && (
           <>
             <IconButton onClick={toggleToc} active={tocVisible} title="Table of Contents (⌘⇧E)">
-              <ListBullets size={14} />
+              <ListBulletsIcon size={14} />
             </IconButton>
             <IconButton onClick={toggleSource} active={sourceVisible} title="Source View (⌘⇧S)">
-              <Code size={14} />
+              <CodeIcon size={14} />
             </IconButton>
           </>
         )}
         <IconButton onClick={cycleTheme} title="Toggle Theme (⌘⇧T)">
-          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          {theme === 'dark' ? <SunIcon size={14} /> : <MoonIcon size={14} />}
         </IconButton>
       </div>
     </div>
