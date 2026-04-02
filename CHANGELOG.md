@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/rvanbaalen/mdreader/compare/v1.2.1...v1.2.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* detach CLI process from terminal, update README with screenshot ([10428dd](https://github.com/rvanbaalen/mdreader/commit/10428ddd832bd1c1acc038bb4e2f33964ab6e4f6))
+
 ## [1.2.1](https://github.com/rvanbaalen/mdreader/compare/v1.2.0...v1.2.1) (2026-04-02)
 
 
