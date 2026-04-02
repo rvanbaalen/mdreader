@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "./dev.sh",
+    "build": "./build.sh",
+    "start": "open mdreader.app"
+  }
+}

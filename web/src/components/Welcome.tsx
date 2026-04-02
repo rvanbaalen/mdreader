@@ -1,5 +1,5 @@
 import { postMessage } from '../lib/bridge'
-import { Kbd, KbdGroup } from './Kbd'
+import { Kbd, KbdGroup } from '@/components/ui/kbd'
 
 export function Welcome() {
   return (
