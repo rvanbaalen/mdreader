@@ -6,6 +6,7 @@ import { Reader } from './components/Reader'
 import { Sidebar } from './components/Sidebar'
 import { Toc } from './components/Toc'
 import { ToastContainer } from './components/Toast'
+import { UpdateBanner } from './components/UpdateBanner'
 import { postMessage } from './lib/bridge'
 import type { Heading } from './lib/markdown'
 
@@ -20,6 +21,7 @@ export default function App() {
   const [tocVisible, setTocVisible] = useState(false)
   const [sourceVisible, setSourceVisible] = useState(false)
   const [fileDir, setFileDir] = useState<string | null>(null)
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
 
   const setTheme = useCallback((t: 'dark' | 'light') => {
@@ -66,7 +68,8 @@ export default function App() {
       toggleSidebar: () => setSidebarVisible(v => !v),
       toggleToc: () => setTocVisible(v => !v),
       toggleSource: () => setSourceVisible(v => !v),
-      showDefaultBanner: () => {}, // TODO
+      showDefaultBanner: () => {},
+      showUpdateBanner: (_current: string, latest: string) => setUpdateVersion(latest),
       nativeAction: (action: string) => postMessage(action),
     }
     ;(window as any).app = app
@@ -114,6 +117,12 @@ export default function App() {
             <Welcome />
           )}
         </div>
+        {updateVersion && (
+          <UpdateBanner
+            latest={updateVersion}
+            onDismiss={() => setUpdateVersion(null)}
+          />
+        )}
         <ToastContainer />
       </div>
     </AppContext.Provider>
