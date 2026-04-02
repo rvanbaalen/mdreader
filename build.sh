@@ -6,7 +6,7 @@ BUNDLE="$APP_NAME.app"
 CONFIG="${1:-release}"
 
 # Version — updated automatically by release-please
-VERSION="1.2.2" # x-release-please-version
+VERSION="1.5.0" # x-release-please-version
 COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 

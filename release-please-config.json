@@ -4,7 +4,14 @@
       "release-type": "simple",
       "bump-minor-pre-major": true,
       "extra-files": [
-        "build.sh"
+        {
+          "type": "generic",
+          "path": "build.sh"
+        },
+        {
+          "type": "generic",
+          "path": "dev.sh"
+        }
       ]
     }
   }
