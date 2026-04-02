@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0](https://github.com/rvanbaalen/mdreader/compare/v1.3.0...v1.4.0) (2026-04-02)
+
+
+### Features
+
+* frosted glass titlebar with native traffic lights ([beae05b](https://github.com/rvanbaalen/mdreader/commit/beae05bc74af8739f6ffdcf0d3d72c2a033a9187))
+* image support, syntax-highlighted source view, scroll fixes ([46b3561](https://github.com/rvanbaalen/mdreader/commit/46b35617576e4073409fed97124d3cc27e232c8a))
+* multi-window support with WindowController architecture ([65e9101](https://github.com/rvanbaalen/mdreader/commit/65e910173c09107a77ff6cb8c80e291aca1cb9d6))
+* native titlebar, custom URL scheme for images, dev workflow ([d0b9b11](https://github.com/rvanbaalen/mdreader/commit/d0b9b11fe55fddde90f8064110b662b8ca253f41))
+
+
+### Bug Fixes
+
+* use non-deprecated Phosphor icon naming convention ([d2273a3](https://github.com/rvanbaalen/mdreader/commit/d2273a344728a297a7347e64a165031d5d70348f))
+
 ## [1.3.0](https://github.com/rvanbaalen/mdreader/compare/v1.2.2...v1.3.0) (2026-04-02)
 
 
