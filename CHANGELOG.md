@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/rvanbaalen/mdreader/compare/v1.2.2...v1.3.0) (2026-04-02)
+
+
+### Features
+
+* auto-update homebrew formula on release ([772c84a](https://github.com/rvanbaalen/mdreader/commit/772c84a8d578a1ff27b73aefa6dce0154531436d))
+* migrate UI to Vite + React + Tailwind v4 ([4031266](https://github.com/rvanbaalen/mdreader/commit/4031266b479459333a80786792f61f04d0172dce))
+
+
+### Bug Fixes
+
+* update brew install instructions to use consolidated tap ([3fd6ba8](https://github.com/rvanbaalen/mdreader/commit/3fd6ba8d6d08d9c4d86af4dd8a236271c98f8443))
+
 ## [1.2.2](https://github.com/rvanbaalen/mdreader/compare/v1.2.1...v1.2.2) (2026-04-02)
 
 
