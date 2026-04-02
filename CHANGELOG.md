@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/rvanbaalen/mdreader/compare/v1.2.0...v1.2.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* resolve symlinks in ResourceLoader for Homebrew installs ([0ce0ae7](https://github.com/rvanbaalen/mdreader/commit/0ce0ae78aef82d400306c276d96c6c9a3f6a3162))
+
 ## [1.2.0](https://github.com/rvanbaalen/mdreader/compare/v1.1.0...v1.2.0) (2026-04-02)
 
 
