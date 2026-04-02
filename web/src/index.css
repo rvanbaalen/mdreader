@@ -56,7 +56,10 @@ html, body, #root {
 body { margin: 0; }
 
 ::selection { background: var(--color-accent-glow); color: var(--color-primary); }
-::-webkit-scrollbar { width: 0; height: 0; }
+
+/* Hide scrollbar visually but keep native scroll physics */
+* { scrollbar-width: none; }
+::-webkit-scrollbar { display: none; }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }

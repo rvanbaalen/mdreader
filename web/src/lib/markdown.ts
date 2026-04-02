@@ -14,10 +14,25 @@ renderer.code = function ({ text, lang }) {
 }
 marked.use({ renderer, gfm: true, breaks: false })
 
+let _fileDir: string | null = null
+
+export function setFileDir(dir: string | null) {
+  _fileDir = dir
+}
+
 export function renderMarkdown(md: string): string {
-  return DOMPurify.sanitize(marked.parse(md) as string, {
+  // Resolve relative image paths to mdfile:// URLs (served by Swift)
+  let processed = md
+  if (_fileDir) {
+    const dir = _fileDir
+    processed = md.replace(/!\[([^\]]*)\]\((?!https?:\/\/|data:|mdfile:\/\/)([^)]+)\)/g,
+      (_, alt, src) => `![${alt}](mdfile://${dir}/${src})`)
+  }
+
+  return DOMPurify.sanitize(marked.parse(processed) as string, {
     ADD_TAGS: ['input', 'button'],
     ADD_ATTR: ['type', 'checked', 'disabled', 'data-lang', 'data-code', 'class'],
+    ALLOW_UNKNOWN_PROTOCOLS: true,
   })
 }
 
