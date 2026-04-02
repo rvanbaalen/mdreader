@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/rvanbaalen/mdreader/compare/v1.4.0...v1.5.0) (2026-04-02)
+
+
+### Features
+
+* auto-update check with brew upgrade and post-update changelog ([e393806](https://github.com/rvanbaalen/mdreader/commit/e39380628cc694571de4a1136ea54e680614fd4c))
+* update banner UI and opaque titlebar fix ([85adf41](https://github.com/rvanbaalen/mdreader/commit/85adf41079b9e1e0b94b2506d4fe631ec7636a69))
+
 ## [1.4.0](https://github.com/rvanbaalen/mdreader/compare/v1.3.0...v1.4.0) (2026-04-02)
 
 
