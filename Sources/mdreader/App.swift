@@ -49,44 +49,37 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     func setup() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1060, height: 720),
-            styleMask: [.borderless, .resizable, .miniaturizable, .closable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
         window.delegate = self
-        window.backgroundColor = .clear
-        window.isOpaque = false
-        window.hasShadow = true
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isMovableByWindowBackground = true
         window.minSize = NSSize(width: 600, height: 400)
-        window.isMovableByWindowBackground = false
-
-        window.contentView!.wantsLayer = true
-        window.contentView!.layer?.cornerRadius = 10
-        window.contentView!.layer?.masksToBounds = true
-        window.contentView!.layer?.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1).cgColor
+        window.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1)
 
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "app")
-        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        config.setURLSchemeHandler(LocalFileHandler(), forURLScheme: "mdfile")
 
         webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
         webView.autoresizingMask = [.width, .height]
         webView.setValue(false, forKey: "drawsBackground")
         webView.navigationDelegate = self
-        webView.enclosingScrollView?.scrollerStyle = .overlay
-        webView.enclosingScrollView?.hasVerticalScroller = true
-        webView.enclosingScrollView?.verticalScrollElasticity = .allowed
         window.contentView!.addSubview(webView)
 
+        let fileRoot = URL(fileURLWithPath: "/")
         if ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1" {
             webView.load(URLRequest(url: URL(string: "http://localhost:5173")!))
         } else if let distIndex = ResourceLoader.url(forResource: "dist/index.html") {
-            webView.loadFileURL(distIndex, allowingReadAccessTo: ResourceLoader.bundle.bundleURL)
+            webView.loadFileURL(distIndex, allowingReadAccessTo: fileRoot)
         } else {
             let html = buildHTML()
             let bundleParent = ResourceLoader.bundle.bundleURL.deletingLastPathComponent()
             let tempHTML = bundleParent.appendingPathComponent("mdreader_ui.html")
             try? html.data(using: .utf8)?.write(to: tempHTML)
-            webView.loadFileURL(tempHTML, allowingReadAccessTo: bundleParent)
+            webView.loadFileURL(tempHTML, allowingReadAccessTo: fileRoot)
         }
     }
 
@@ -95,7 +88,8 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     func openFile(_ url: URL) {
         guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
         currentFile = url
-        webView.evaluateJavaScript("app.openFile(`\(content.jsEscaped())`, '\(url.lastPathComponent.jsEscaped())', '\((currentFolder?.lastPathComponent ?? "").jsEscaped())')")
+        let dirPath = url.deletingLastPathComponent().path
+        webView.evaluateJavaScript("app.openFile(`\(content.jsEscaped())`, '\(url.lastPathComponent.jsEscaped())', '\((currentFolder?.lastPathComponent ?? "").jsEscaped())', '\(dirPath.jsEscaped())')")
         watchFile(url)
     }
 
@@ -165,12 +159,6 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
             if let event = NSApplication.shared.currentEvent {
                 window.performDrag(with: event)
             }
-        case "minimize":
-            window.miniaturize(nil)
-        case "close":
-            window.close()
-        case "zoom":
-            window.zoom(nil)
         case "setDefaultApp":
             UserDefaults.standard.set(true, forKey: "defaultAppAsked")
             AppDelegate.shared.setAsDefaultApp(from: self)
@@ -421,6 +409,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let icon = NSApplication.shared.applicationIconImage { alert.icon = icon }
         alert.runModal()
     }
+}
+
+// MARK: - Custom URL scheme for local file access (images etc.)
+
+class LocalFileHandler: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url else {
+            urlSchemeTask.didFailWithError(URLError(.badURL))
+            return
+        }
+        // mdfile:///path/to/image.png → /path/to/image.png
+        let filePath = url.path
+        let fileURL = URL(fileURLWithPath: filePath)
+        guard let data = try? Data(contentsOf: fileURL) else {
+            urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+            return
+        }
+        let mimeType: String
+        switch fileURL.pathExtension.lowercased() {
+        case "png": mimeType = "image/png"
+        case "jpg", "jpeg": mimeType = "image/jpeg"
+        case "gif": mimeType = "image/gif"
+        case "svg": mimeType = "image/svg+xml"
+        case "webp": mimeType = "image/webp"
+        case "bmp": mimeType = "image/bmp"
+        case "ico": mimeType = "image/x-icon"
+        default: mimeType = "application/octet-stream"
+        }
+        let response = URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: nil)
+        urlSchemeTask.didReceive(response)
+        urlSchemeTask.didReceive(data)
+        urlSchemeTask.didFinish()
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {}
 }
 
 extension String {
