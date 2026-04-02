@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/rvanbaalen/mdreader/compare/v1.1.0...v1.2.0) (2026-04-02)
+
+
+### Features
+
+* full rewrite as borderless WKWebView app ([7afba30](https://github.com/rvanbaalen/mdreader/commit/7afba30a5fb6f079aabb282321cae09d974a312b))
+
 ## [1.1.0](https://github.com/rvanbaalen/mdreader/compare/v1.0.3...v1.1.0) (2026-04-01)
 
 
