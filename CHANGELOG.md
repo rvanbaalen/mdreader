@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/rvanbaalen/mdreader/compare/v1.5.0...v1.5.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* correct release-please extra-files config and sync version to 1.5.0 ([9a3c118](https://github.com/rvanbaalen/mdreader/commit/9a3c11825e9b2f20c90eb8dc64e399c2fba50e70))
+
 ## [1.5.0](https://github.com/rvanbaalen/mdreader/compare/v1.4.0...v1.5.0) (2026-04-02)
 
 
