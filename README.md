@@ -25,8 +25,7 @@ Every markdown tool on macOS is either an editor that happens to render, or a ba
 ### Homebrew
 
 ```bash
-brew tap rvanbaalen/mdreader
-brew install mdreader
+brew install rvanbaalen/tap/mdreader
 sudo ln -sf $(brew --prefix)/opt/mdreader/mdreader.app /Applications/mdreader.app
 ```
 
