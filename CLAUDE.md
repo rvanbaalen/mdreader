@@ -29,7 +29,8 @@ open mdreader.app  # run it
 - Use CSS transitions and animations everywhere — nothing should snap, everything flows
 - Staggered appear animations for content (fadeUp with increasing delay)
 - Smooth theme transitions (background, color, border all transition together)
-- Use Phosphor Icons (as inline SVGs) for all icons — no emoji, no SF Symbols in the WebView
+- Use `@phosphor-icons/react` for all icons — never hand-code SVGs, never use emoji or SF Symbols
+- Never edit shadcn components directly — compose around them
 - Button press states with scale transform
 - Sidebar/ToC slide in from their respective edges
 - Inline code elements are click-to-copy with visual feedback

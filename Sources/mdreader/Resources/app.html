@@ -328,12 +328,43 @@ var app = {
 };
 
 app.showToast = function(msg) {
+  var container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  // Shift existing toasts back in the stack
+  var existing = container.querySelectorAll('.toast');
+  existing.forEach(function(t) {
+    t.classList.remove('stack-1', 'stack-2', 'stack-3');
+  });
+  var arr = Array.from(existing).reverse();
+  if (arr[0]) arr[0].classList.add('stack-1');
+  if (arr[1]) arr[1].classList.add('stack-2');
+  if (arr[2]) arr[2].classList.add('stack-3');
+
+  // Remove overflow (max 3)
+  while (container.querySelectorAll('.toast').length >= 3) {
+    container.querySelector('.toast').remove();
+  }
+
   var toast = document.createElement('div');
   toast.className = 'toast';
   toast.textContent = msg;
-  document.body.appendChild(toast);
+  container.appendChild(toast);
   setTimeout(function() { toast.classList.add('show'); }, 10);
-  setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 3000);
+  setTimeout(function() {
+    toast.classList.remove('show');
+    setTimeout(function() {
+      toast.remove();
+      // Re-stack remaining
+      var remaining = container.querySelectorAll('.toast');
+      remaining.forEach(function(t) { t.classList.remove('stack-1', 'stack-2', 'stack-3'); });
+    }, 350);
+  }, 3000);
 };
 
 function copyCode(btn) {

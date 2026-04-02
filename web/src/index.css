@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@font-face { font-family: 'Lora'; src: url('/fonts/Lora-Regular.otf'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Lora'; src: url('/fonts/Lora-Bold.otf'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Lora'; src: url('/fonts/Lora-Italic.otf'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Lora'; src: url('/fonts/Lora-BoldItalic.otf'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'DM Sans'; src: url('/fonts/DMSans-Variable.ttf'); }
+@font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/IBMPlexMono-Regular.otf'); font-weight: 400; }
+
+@theme {
+  --font-serif: 'Lora', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --color-base: oklch(10% 0.01 260);
+  --color-surface: oklch(14% 0.012 260);
+  --color-surface-hover: oklch(17% 0.015 260);
+  --color-edge: oklch(20% 0.015 260);
+  --color-edge-subtle: oklch(16% 0.01 260);
+  --color-primary: oklch(93% 0.015 80);
+  --color-secondary: oklch(65% 0.01 80);
+  --color-muted: oklch(45% 0.008 260);
+  --color-dim: oklch(30% 0.008 260);
+  --color-accent: oklch(62% 0.04 260);
+  --color-accent-bright: oklch(70% 0.05 260);
+  --color-accent-dim: oklch(52% 0.03 260);
+  --color-accent-glow: oklch(62% 0.04 260 / 0.1);
+}
+
+[data-theme="light"] {
+  --color-base: oklch(97% 0.005 80);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-hover: oklch(95% 0.005 80);
+  --color-edge: oklch(85% 0.01 80);
+  --color-edge-subtle: oklch(90% 0.005 80);
+  --color-primary: oklch(15% 0.01 260);
+  --color-secondary: oklch(35% 0.01 260);
+  --color-muted: oklch(55% 0.008 260);
+  --color-dim: oklch(70% 0.005 260);
+  --color-accent: oklch(42% 0.04 260);
+  --color-accent-bright: oklch(35% 0.05 260);
+  --color-accent-dim: oklch(52% 0.03 260);
+  --color-accent-glow: oklch(42% 0.04 260 / 0.08);
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-base);
+  color: var(--color-secondary);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+body { margin: 0; }
+
+::selection { background: var(--color-accent-glow); color: var(--color-primary); }
+::-webkit-scrollbar { width: 0; height: 0; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ghostPulse {
+  0% { transform: scale(1); opacity: 1; }
+  40% { transform: scale(1.08); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}

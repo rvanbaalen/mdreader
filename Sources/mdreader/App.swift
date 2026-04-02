@@ -84,12 +84,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
         webView.enclosingScrollView?.verticalScrollElasticity = .allowed
         window.contentView!.addSubview(webView)
 
-        // Load UI
-        let html = buildHTML()
-        let bundleParent = ResourceLoader.bundle.bundleURL.deletingLastPathComponent()
-        let tempHTML = bundleParent.appendingPathComponent("mdreader_ui.html")
-        try? html.data(using: .utf8)?.write(to: tempHTML)
-        webView.loadFileURL(tempHTML, allowingReadAccessTo: bundleParent)
+        // Load UI — Vite dev server or bundled dist
+        if ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1" {
+            webView.load(URLRequest(url: URL(string: "http://localhost:5173")!))
+        } else if let distIndex = ResourceLoader.url(forResource: "dist/index.html") {
+            // Production: load Vite build output
+            webView.loadFileURL(distIndex, allowingReadAccessTo: ResourceLoader.bundle.bundleURL)
+        } else {
+            // Fallback: old app.html
+            let html = buildHTML()
+            let bundleParent = ResourceLoader.bundle.bundleURL.deletingLastPathComponent()
+            let tempHTML = bundleParent.appendingPathComponent("mdreader_ui.html")
+            try? html.data(using: .utf8)?.write(to: tempHTML)
+            webView.loadFileURL(tempHTML, allowingReadAccessTo: bundleParent)
+        }
 
         window.makeKeyAndOrderFront(nil)
         NSRunningApplication.current.activate()
@@ -223,11 +231,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNa
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let url = navigationAction.request.url {
-            // Allow file:// and about: (our local UI), block everything else → open in browser
-            if url.scheme == "file" || url.scheme == "about" {
+            let scheme = url.scheme ?? ""
+            let host = url.host ?? ""
+            // Allow: file://, about:, localhost (Vite dev), ws:// (HMR)
+            if scheme == "file" || scheme == "about" || scheme == "ws" || scheme == "wss"
+                || host == "localhost" || host == "127.0.0.1" {
                 decisionHandler(.allow)
                 return
             }
+            // External URL — open in default browser
             NSWorkspace.shared.open(url)
             decisionHandler(.cancel)
             return

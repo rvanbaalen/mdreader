@@ -12,6 +12,16 @@ COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 
 echo "Building $APP_NAME $VERSION ($COMMIT) [$CONFIG]..."
+
+# Build web UI
+if [ -d "web" ] && [ -f "web/package.json" ]; then
+    echo "Building web UI..."
+    cd web
+    npm ci --silent 2>/dev/null || npm install --silent
+    npx vite build 2>&1 | tail -3
+    cd ..
+fi
+
 swift build -c "$CONFIG" --disable-sandbox 2>&1 | tail -3
 
 BUILD_DIR=$(swift build -c "$CONFIG" --show-bin-path 2>/dev/null)
@@ -31,6 +41,11 @@ fi
 
 # Write build info into the resource bundle
 echo "$COMMIT" > "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/build-info.txt"
+
+# Copy Vite dist into the resource bundle
+if [ -d "web/dist" ]; then
+    cp -R web/dist "$BUNDLE/Contents/Resources/mdreader_mdreader.bundle/Resources/dist"
+fi
 
 # Copy icons
 if [ -f "build/icon.icns" ]; then
