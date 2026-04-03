@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/rvanbaalen/mdreader/compare/v1.6.0...v1.6.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **app:** use bundle ID for relaunch so macOS finds new version after brew upgrade ([4bd2094](https://github.com/rvanbaalen/mdreader/commit/4bd2094641f8eae4cb859bdda107ed027fd53e77))
+* **content:** tighten list indentation and scale down marker size ([76a3ad6](https://github.com/rvanbaalen/mdreader/commit/76a3ad6257c5c9a972b150be5e06447878d20fb3))
+
 ## [1.6.0](https://github.com/rvanbaalen/mdreader/compare/v1.5.2...v1.6.0) (2026-04-03)
 
 
