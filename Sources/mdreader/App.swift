@@ -5,17 +5,61 @@ import CoreServices
 
 @main
 struct MDReaderEntry {
+    private static var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+    }
+
     static func main() {
+        let args = Array(CommandLine.arguments.dropFirst())
+
+        // CLI flags — handle before launching GUI
+        if args.contains("--version") || args.contains("-v") {
+            print("mdreader \(appVersion)")
+            exit(0)
+        }
+
+        if args.contains("--help") || args.contains("-h") {
+            print("""
+            mdreader \(appVersion) — A beautiful markdown reader for macOS
+
+            USAGE:
+                mdreader [options] [file|folder]
+                mdreader open <file|folder>
+
+            OPTIONS:
+                -h, --help       Show this help message
+                -v, --version    Show version number
+                --log-path       Print log file path
+
+            EXAMPLES:
+                mdreader                     Open mdreader
+                mdreader README.md           Open a markdown file
+                mdreader ./docs              Open a folder
+                mdreader open ~/notes        Open a folder
+            """)
+            exit(0)
+        }
+
+        if args.contains("--log-path") {
+            print(MDLogger.shared.logFilePath)
+            exit(0)
+        }
+
+        // Strip `open` subcommand so downstream code sees just the path
+        var fileArgs = args
+        if fileArgs.first == "open" {
+            fileArgs.removeFirst()
+        }
+
         // If launched from a terminal, detach and re-launch as a GUI process
         if isatty(STDIN_FILENO) == 1, ProcessInfo.processInfo.environment["MDREADER_LAUNCHED"] == nil {
-            var args = CommandLine.arguments
-            let execPath = args.removeFirst()
+            let execPath = CommandLine.arguments[0]
             var env = ProcessInfo.processInfo.environment
             env["MDREADER_LAUNCHED"] = "1"
 
             let process = Process()
             process.executableURL = URL(fileURLWithPath: execPath)
-            process.arguments = args
+            process.arguments = fileArgs
             process.environment = env
             // Detach from terminal
             process.standardInput = FileHandle.nullDevice
@@ -25,6 +69,10 @@ struct MDReaderEntry {
             // Parent exits immediately, returning the terminal
             exit(0)
         }
+
+        let isDev = ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1"
+        log.info("mdreader \(appVersion) starting (mode: \(isDev ? "dev" : "production"))")
+        log.info("Log file: \(log.logFilePath)")
 
         _ = ResourceLoader.fontsRegistered
         let app = NSApplication.shared
@@ -55,6 +103,7 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         window.delegate = self
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.titlebarSeparatorStyle = .none
         window.isMovableByWindowBackground = true
         window.minSize = NSSize(width: 600, height: 400)
         window.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1)
@@ -64,18 +113,60 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         config.setURLSchemeHandler(LocalFileHandler(), forURLScheme: "mdfile")
 
+        // Forward JS console messages to Swift logger
+        let consoleScript = WKUserScript(source: """
+            (function() {
+                function forward(level) {
+                    const orig = console[level];
+                    console[level] = function() {
+                        const msg = Array.from(arguments).map(a => {
+                            try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+                            catch { return String(a); }
+                        }).join(' ');
+                        window.webkit.messageHandlers.app.postMessage({ action: 'console', level: level, message: msg });
+                        orig.apply(console, arguments);
+                    };
+                }
+                ['log', 'warn', 'error', 'info', 'debug'].forEach(forward);
+                window.addEventListener('error', function(e) {
+                    window.webkit.messageHandlers.app.postMessage({
+                        action: 'console', level: 'error',
+                        message: e.message + ' (' + (e.filename || '') + ':' + (e.lineno || '') + ')'
+                    });
+                });
+                window.addEventListener('unhandledrejection', function(e) {
+                    window.webkit.messageHandlers.app.postMessage({
+                        action: 'console', level: 'error',
+                        message: 'Unhandled rejection: ' + (e.reason || '')
+                    });
+                });
+            })();
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        config.userContentController.addUserScript(consoleScript)
+
         webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
         webView.autoresizingMask = [.width, .height]
         webView.setValue(false, forKey: "drawsBackground")
         webView.navigationDelegate = self
         window.contentView!.addSubview(webView)
 
+        // Enable Web Inspector in dev mode
+        let isDev = ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1"
+        if isDev {
+            webView.isInspectable = true
+            log.info("Web Inspector enabled (right-click → Inspect Element)", component: "WebView")
+        }
+
         let fileRoot = URL(fileURLWithPath: "/")
-        if ProcessInfo.processInfo.environment["MDREADER_DEV"] == "1" {
-            webView.load(URLRequest(url: URL(string: "http://localhost:5173")!))
+        if isDev {
+            let devURL = URL(string: "http://localhost:5173")!
+            log.info("Loading dev server: \(devURL)", component: "WebView")
+            webView.load(URLRequest(url: devURL))
         } else if let distIndex = ResourceLoader.url(forResource: "dist/index.html") {
+            log.info("Loading bundled UI: \(distIndex.path)", component: "WebView")
             webView.loadFileURL(distIndex, allowingReadAccessTo: fileRoot)
         } else {
+            log.warn("No dist/ found, falling back to inline HTML", component: "WebView")
             let html = buildHTML()
             let bundleParent = ResourceLoader.bundle.bundleURL.deletingLastPathComponent()
             let tempHTML = bundleParent.appendingPathComponent("mdreader_ui.html")
@@ -87,7 +178,13 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     // MARK: - File ops
 
     func openFile(_ url: URL) {
-        guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+        guard let content = try? String(contentsOf: url, encoding: .utf8) else {
+            log.error("Failed to read file: \(url.path)", component: "FileIO")
+            return
+        }
+        log.info("Opening file: \(url.path) (\(content.count) bytes)", component: "FileIO")
+        Recents.add(path: url.path, isDir: false)
+        AppDelegate.shared.broadcastRecents()
         currentFile = url
         let dirPath = url.deletingLastPathComponent().path
         webView.evaluateJavaScript("app.openFile(`\(content.jsEscaped())`, '\(url.lastPathComponent.jsEscaped())', '\((currentFolder?.lastPathComponent ?? "").jsEscaped())', '\(dirPath.jsEscaped())')")
@@ -95,6 +192,9 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     }
 
     func openFolder(_ url: URL) {
+        log.info("Opening folder: \(url.path)", component: "FileIO")
+        Recents.add(path: url.path, isDir: true)
+        AppDelegate.shared.broadcastRecents()
         currentFolder = url
         let tree = scanFolder(url)
         let json = (try? JSONSerialization.data(withJSONObject: tree)) ?? Data()
@@ -124,14 +224,38 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         return nil
     }
 
+    private var lastWatchedContent: String?
+
     func watchFile(_ url: URL) {
         watcher?.cancel()
+        lastWatchedContent = try? String(contentsOf: url, encoding: .utf8)
+        startWatcher(for: url)
+    }
+
+    private func startWatcher(for url: URL) {
         let fd = open(url.path, O_EVTONLY)
-        guard fd >= 0 else { return }
-        let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: .write, queue: .main)
+        guard fd >= 0 else {
+            // File may have been atomically replaced — retry shortly
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.startWatcher(for: url)
+            }
+            return
+        }
+        let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .delete, .rename], queue: .main)
         src.setEventHandler { [weak self] in
-            guard let self, let c = try? String(contentsOf: url, encoding: .utf8) else { return }
-            self.webView.evaluateJavaScript("app.updateContent(`\(c.jsEscaped())`)")
+            guard let self else { return }
+            // Re-read content after a tiny delay (editors may still be writing)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+                if content != self.lastWatchedContent {
+                    self.lastWatchedContent = content
+                    self.webView.evaluateJavaScript("app.updateContent(`\(content.jsEscaped())`)")
+                    log.debug("File updated externally: \(url.lastPathComponent)", component: "FileIO")
+                }
+                // Re-establish watcher (atomic saves invalidate the fd)
+                self.watcher?.cancel()
+                self.startWatcher(for: url)
+            }
         }
         src.setCancelHandler { close(fd) }
         src.resume()
@@ -142,18 +266,61 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let action = body["action"] as? String else { return }
+        if action == "console" {
+            let level = body["level"] as? String ?? "log"
+            let msg = body["message"] as? String ?? ""
+            switch level {
+            case "error": log.error(msg, component: "JS")
+            case "warn":  log.warn(msg, component: "JS")
+            case "debug": log.debug(msg, component: "JS")
+            default:      log.info(msg, component: "JS")
+            }
+            return
+        }
+        log.debug("Message from JS: \(action)", component: "Bridge")
         switch action {
-        case "openFile":
+        case "open", "openFile":
             let panel = NSOpenPanel()
+            panel.canChooseFiles = true
+            panel.canChooseDirectories = true
             panel.allowsOtherFileTypes = true
             panel.allowedContentTypes = [UTType(filenameExtension: "md"), UTType(filenameExtension: "markdown"), .plainText].compactMap { $0 }
-            if panel.runModal() == .OK, let url = panel.url { openFile(url) }
+            panel.prompt = "Open"
+            if panel.runModal() == .OK, let url = panel.url {
+                var isDir: ObjCBool = false
+                if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                    openFolder(url)
+                } else {
+                    openFile(url)
+                }
+            }
         case "openFolder":
             let panel = NSOpenPanel()
             panel.canChooseDirectories = true; panel.canChooseFiles = false
             if panel.runModal() == .OK, let url = panel.url { openFolder(url) }
         case "openFilePath":
-            if let p = body["path"] as? String { openFile(URL(fileURLWithPath: p)) }
+            if let p = body["path"] as? String {
+                let url = URL(fileURLWithPath: p)
+                var isDir: ObjCBool = false
+                if FileManager.default.fileExists(atPath: p, isDirectory: &isDir), isDir.boolValue {
+                    openFolder(url)
+                } else {
+                    openFile(url)
+                }
+            }
+        case "saveFile":
+            if let content = body["content"] as? String, let file = currentFile {
+                log.info("Saving file: \(file.path)", component: "FileIO")
+                do {
+                    // Update tracked content so watcher won't echo our own save
+                    lastWatchedContent = content
+                    try content.write(to: file, atomically: true, encoding: .utf8)
+                    webView.evaluateJavaScript("app.onSaveComplete(true)")
+                } catch {
+                    log.error("Save failed: \(error.localizedDescription)", component: "FileIO")
+                    webView.evaluateJavaScript("app.onSaveComplete(false)")
+                }
+            }
         case "setTheme":
             if let m = body["mode"] as? String { UserDefaults.standard.set(m, forKey: "themeMode") }
         case "startDrag":
@@ -179,6 +346,9 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
                 theme = isDark ? "dark" : "light"
             }
             webView.evaluateJavaScript("app.setTheme('\(theme)')")
+            if let json = Recents.json() {
+                webView.evaluateJavaScript("app.setRecents(\(json))")
+            }
             if !UserDefaults.standard.bool(forKey: "defaultAppAsked") {
                 checkDefaultApp()
             }
@@ -193,7 +363,17 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         }
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {}
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        log.info("Page loaded: \(webView.url?.absoluteString ?? "unknown")", component: "WebView")
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        log.error("Navigation failed: \(error.localizedDescription)", component: "WebView")
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        log.error("Provisional navigation failed: \(error.localizedDescription) (URL: \(webView.url?.absoluteString ?? "unknown"))", component: "WebView")
+    }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let url = navigationAction.request.url {
@@ -252,6 +432,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
+        log.info("App launched, PID \(ProcessInfo.processInfo.processIdentifier)")
 
         if let url = ResourceLoader.url(forResource: "icon.icns"),
            let icon = NSImage(contentsOf: url) {
@@ -262,15 +443,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let wc = createWindow(center: true)
         if CommandLine.arguments.count > 1 {
-            wc.pendingFile = URL(fileURLWithPath: CommandLine.arguments[1])
+            let path = CommandLine.arguments[1]
+            log.info("CLI argument: \(path)")
+            wc.pendingFile = URL(fileURLWithPath: path)
         }
         NSRunningApplication.current.activate()
 
         // Show changelog once after update
         showChangelogIfUpdated(in: wc)
 
-        // Check for updates in background
-        checkForUpdates()
+        // Check for updates in background (skip in dev mode)
+        if ProcessInfo.processInfo.environment["MDREADER_DEV"] != "1" {
+            checkForUpdates()
+        } else {
+            log.debug("Skipping update check in dev mode", component: "Update")
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -278,6 +465,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { createWindow(center: true) }
         return true
+    }
+
+    func broadcastRecents() {
+        guard let json = Recents.json() else { return }
+        for wc in windowControllers where wc.webReady {
+            wc.webView.evaluateJavaScript("app.setRecents(\(json))")
+        }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -309,7 +503,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func windowDidClose(_ wc: WindowController) {
+        let hadFile = wc.currentFile != nil
         windowControllers.removeAll { $0 === wc }
+
+        if windowControllers.isEmpty {
+            if hadFile {
+                // Last file window closed — open a welcome window
+                createWindow(center: true)
+            } else {
+                // Welcome window closed — quit
+                NSApplication.shared.terminate(nil)
+            }
+        }
     }
 
     func keyWindowController() -> WindowController? {
@@ -324,15 +529,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func checkForUpdates() {
+        log.info("Checking for updates (current: \(currentVersion))", component: "Update")
         guard let url = URL(string: "https://api.github.com/repos/rvanbaalen/mdreader/releases/latest") else { return }
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            if let error {
+                log.warn("Update check failed: \(error.localizedDescription)", component: "Update")
+                return
+            }
             guard let self, let data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let tagName = json["tag_name"] as? String else { return }
             let latest = tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
-            guard latest != self.currentVersion, self.isNewer(latest, than: self.currentVersion) else { return }
+            guard latest != self.currentVersion, self.isNewer(latest, than: self.currentVersion) else {
+                log.info("Up to date (latest: \(latest))", component: "Update")
+                return
+            }
+            log.info("Update available: \(latest)", component: "Update")
             DispatchQueue.main.async {
                 if let wc = self.windowControllers.first(where: { $0.webReady }) {
                     wc.webView.evaluateJavaScript("app.showUpdateBanner('\(self.currentVersion)', '\(latest)')")
@@ -446,10 +660,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let newWindowItem = NSMenuItem(title: "New Window", action: #selector(menuNewWindow), keyEquivalent: "n")
         newWindowItem.target = self; fileSub.addItem(newWindowItem)
         fileSub.addItem(.separator())
-        let openFileItem = NSMenuItem(title: "Open File...", action: #selector(menuOpenFile), keyEquivalent: "o")
-        openFileItem.target = self; fileSub.addItem(openFileItem)
-        let openFolderItem = NSMenuItem(title: "Open Folder...", action: #selector(menuOpenFolder), keyEquivalent: "O")
-        openFolderItem.target = self; fileSub.addItem(openFolderItem)
+        let openItem = NSMenuItem(title: "Open...", action: #selector(menuOpen), keyEquivalent: "o")
+        openItem.target = self; fileSub.addItem(openItem)
+        let saveItem = NSMenuItem(title: "Save", action: #selector(menuSave), keyEquivalent: "s")
+        saveItem.target = self; fileSub.addItem(saveItem)
         fileSub.addItem(.separator())
         let closeItem = NSMenuItem(title: "Close Window", action: #selector(menuCloseWindow), keyEquivalent: "w")
         closeItem.target = self; fileSub.addItem(closeItem)
@@ -462,6 +676,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         tocItem.keyEquivalentModifierMask = [.command, .shift]; tocItem.target = self; viewSub.addItem(tocItem)
         let themeItem = NSMenuItem(title: "Toggle Theme", action: #selector(menuToggleTheme), keyEquivalent: "t")
         themeItem.keyEquivalentModifierMask = [.command, .shift]; themeItem.target = self; viewSub.addItem(themeItem)
+        let editItem = NSMenuItem(title: "Toggle Edit Mode", action: #selector(menuToggleEdit), keyEquivalent: "e")
+        editItem.target = self; viewSub.addItem(editItem)
         viewMenu.submenu = viewSub; menu.addItem(viewMenu)
 
         let editMenu = NSMenuItem(); let editSub = NSMenu(title: "Edit")
@@ -469,25 +685,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         editSub.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.submenu = editSub; menu.addItem(editMenu)
 
+        let helpMenu = NSMenuItem(); let helpSub = NSMenu(title: "Help")
+        let bugItem = NSMenuItem(title: "Report a Bug...", action: #selector(menuReportBug), keyEquivalent: "")
+        bugItem.target = self; helpSub.addItem(bugItem)
+        let featureItem = NSMenuItem(title: "Request a Feature...", action: #selector(menuRequestFeature), keyEquivalent: "")
+        featureItem.target = self; helpSub.addItem(featureItem)
+        helpSub.addItem(.separator())
+        let copyLogsItem = NSMenuItem(title: "Copy Logs to Clipboard", action: #selector(menuCopyLogs), keyEquivalent: "")
+        copyLogsItem.target = self; helpSub.addItem(copyLogsItem)
+        let showLogsItem = NSMenuItem(title: "Show Logs in Finder", action: #selector(menuShowLogs), keyEquivalent: "")
+        showLogsItem.target = self; helpSub.addItem(showLogsItem)
+        helpMenu.submenu = helpSub; menu.addItem(helpMenu)
+
         NSApplication.shared.mainMenu = menu
     }
 
     @objc func menuNewWindow() { createWindow() }
     @objc func menuCloseWindow() { NSApplication.shared.keyWindow?.close() }
+    @objc func menuSave() { keyWindowController()?.webView.evaluateJavaScript("app.save()") }
 
-    @objc func menuOpenFile() {
+    @objc func menuOpen() {
         let wc = keyWindowController() ?? createWindow()
         let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
         panel.allowsOtherFileTypes = true
         panel.allowedContentTypes = [UTType(filenameExtension: "md"), UTType(filenameExtension: "markdown"), .plainText].compactMap { $0 }
-        if panel.runModal() == .OK, let url = panel.url { wc.openFile(url) }
-    }
-
-    @objc func menuOpenFolder() {
-        let wc = keyWindowController() ?? createWindow()
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true; panel.canChooseFiles = false
-        if panel.runModal() == .OK, let url = panel.url { wc.openFolder(url) }
+        panel.prompt = "Open"
+        if panel.runModal() == .OK, let url = panel.url {
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                wc.openFolder(url)
+            } else {
+                wc.openFile(url)
+            }
+        }
     }
 
     @objc func menuSetDefault() {
@@ -496,6 +728,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func menuToggleSidebar() { keyWindowController()?.webView.evaluateJavaScript("app.toggleSidebar()") }
     @objc func menuToggleToc() { keyWindowController()?.webView.evaluateJavaScript("app.toggleToc()") }
     @objc func menuToggleTheme() { keyWindowController()?.webView.evaluateJavaScript("app.cycleTheme()") }
+    @objc func menuToggleEdit() { keyWindowController()?.webView.evaluateJavaScript("app.toggleEdit()") }
+
+    @objc func menuReportBug() {
+        NSWorkspace.shared.open(URL(string: "https://github.com/rvanbaalen/mdreader/issues/new?labels=bug&template=bug_report.md")!)
+    }
+
+    @objc func menuRequestFeature() {
+        NSWorkspace.shared.open(URL(string: "https://github.com/rvanbaalen/mdreader/issues/new?labels=enhancement&template=feature_request.md")!)
+    }
+
+    @objc func menuCopyLogs() {
+        let contents = log.logContents()
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(contents, forType: .string)
+        if let wc = keyWindowController(), wc.webReady {
+            wc.webView.evaluateJavaScript("app.showToast('Logs copied to clipboard')")
+        }
+    }
+
+    @objc func menuShowLogs() {
+        NSWorkspace.shared.selectFile(log.logFilePath, inFileViewerRootedAtPath: log.logDirectoryPath)
+    }
 
     @objc func showAbout() {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
@@ -543,6 +797,35 @@ class LocalFileHandler: NSObject, WKURLSchemeHandler {
     }
 
     func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {}
+}
+
+// MARK: - Recents
+
+enum Recents {
+    private static let key = "recentItems"
+    private static let maxItems = 10
+
+    static func add(path: String, isDir: Bool) {
+        var items = load()
+        items.removeAll { $0["path"] as? String == path }
+        items.insert(["path": path, "name": URL(fileURLWithPath: path).lastPathComponent, "isDir": isDir], at: 0)
+        if items.count > maxItems { items = Array(items.prefix(maxItems)) }
+        UserDefaults.standard.set(items, forKey: key)
+        UserDefaults.standard.synchronize()
+    }
+
+    static func load() -> [[String: Any]] {
+        UserDefaults.standard.array(forKey: key) as? [[String: Any]] ?? []
+    }
+
+    static func json() -> String? {
+        let items = load().filter { item in
+            guard let path = item["path"] as? String else { return false }
+            return FileManager.default.fileExists(atPath: path)
+        }
+        guard !items.isEmpty, let data = try? JSONSerialization.data(withJSONObject: items) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
 }
 
 extension String {
