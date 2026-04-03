@@ -9,7 +9,7 @@
 - Communication: JS → Swift via `window.webkit.messageHandlers.app.postMessage()`, Swift → JS via `evaluateJavaScript()`
 - Multi-window: each window is a `WindowController` with its own WKWebView and file state
 - Images in markdown: resolved via `mdfile://` custom URL scheme handled by `LocalFileHandler`
-- Design system from ~/Sites/robinvanbaalen.nl/DESIGN.md (Lora serif, DM Sans, IBM Plex Mono, oklch colors)
+- Design system defined in DESIGN.md (Lora serif, DM Sans, IBM Plex Mono, oklch colors)
 
 ## Build
 
@@ -33,13 +33,22 @@ npm start      # open the built app
 - Fonts are bundled in `Sources/mdreader/Resources/Fonts/`
 - Always clean build when testing: `rm -rf .build/release mdreader.app && ./build.sh`
 - Never do manual work that an automated process handles (version bumps, formula updates, changelog generation)
+- Always write typesafe code. Never use `as any` — use proper types, interfaces, or `unknown` with type guards
+- Never use `style={{}}` in React components — always use Tailwind classes including arbitrary values
+
+## UX Principles
+
+- Every user action must have visible feedback (toast, animation, state change)
+- Never fail silently — always show user-friendly feedback on success AND failure
+- Use non-technical language in all user-facing messages
+- Keyboard shortcuts must work reliably — test the full chain (native menu → JS bridge → action)
 
 ## UI Guidelines
 
 - Use CSS transitions and animations everywhere — nothing should snap, everything flows
 - Staggered appear animations for content (fadeUp with increasing delay)
 - Smooth theme transitions (background, color, border all transition together)
-- Use `@phosphor-icons/react` with `NameIcon` convention (not deprecated `Name` exports) — never hand-code SVGs, never use emoji or SF Symbols
+- Use `@phosphor-icons/react` with `NameIcon` convention (not deprecated `Name` exports) — never hand-code SVGs, never use emoji, SF Symbols, or ASCII/Unicode characters for icons or modifier keys (use CommandIcon, ArrowUpIcon, OptionIcon, ControlIcon etc.)
 - Never edit shadcn components directly — compose around them
 - Button press states with scale transform
 - Sidebar/ToC slide in from their respective edges
