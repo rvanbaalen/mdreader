@@ -611,10 +611,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func restartApp() {
         let bundleId = Bundle.main.bundleIdentifier ?? "com.rvanbaalen.mdreader"
-        // Relaunch by bundle ID so macOS finds the new version after brew upgrade
+        let appPath = Bundle.main.bundleURL.path
+        // Try bundle ID first (finds new version after brew upgrade), fall back to path (dev builds)
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", "sleep 1 && open -b \"\(bundleId)\""]
+        task.arguments = ["-c", "sleep 1 && open -b \"\(bundleId)\" 2>/dev/null || open \"\(appPath)\""]
         try? task.run()
         NSApplication.shared.terminate(nil)
     }
