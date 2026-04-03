@@ -1,11 +1,13 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { AppContext, type FileNode } from './hooks/useStore'
 import { TitleBar } from './components/TitleBar'
 import { Welcome } from './components/Welcome'
 import { Reader } from './components/Reader'
 import { Sidebar } from './components/Sidebar'
 import { Toc } from './components/Toc'
-import { ToastContainer } from './components/Toast'
+import { toast } from 'sonner'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { UpdateBanner } from './components/UpdateBanner'
 import { postMessage } from './lib/bridge'
 import type { Heading } from './lib/markdown'
@@ -20,9 +22,20 @@ export default function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false)
   const [tocVisible, setTocVisible] = useState(false)
   const [sourceVisible, setSourceVisible] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const [fileDir, setFileDir] = useState<string | null>(null)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
+  const [recents, setRecents] = useState<RecentItem[]>([])
+
+  const editorContentRef = useRef<string>('')
+  const dirtyRef = useRef(false)
+  const editModeRef = useRef(false)
+
+  // Keep refs in sync
+  dirtyRef.current = dirty
+  editModeRef.current = editMode
 
   const setTheme = useCallback((t: 'dark' | 'light') => {
     setThemeState(t)
@@ -44,7 +57,10 @@ export default function App() {
     if (folder) setCurrentFolder(folder)
     if (dir) setFileDir(dir)
     setMarkdown(md)
+    editorContentRef.current = md
     setSourceVisible(false)
+    setEditMode(false)
+    setDirty(false)
   }, [])
 
   const openFolder = useCallback((name: string, tree: FileNode[]) => {
@@ -55,11 +71,22 @@ export default function App() {
 
   const updateContent = useCallback((md: string) => {
     setMarkdown(md)
+    editorContentRef.current = md
+    setDirty(false)
   }, [])
 
-  // Expose API for Swift bridge
+  const toggleEdit = useCallback(() => {
+    setEditMode(prev => {
+      if (!prev) {
+        setSourceVisible(true)
+      }
+      return !prev
+    })
+  }, [])
+
+  // Expose API for Swift bridge — use refs to avoid stale closures
   useEffect(() => {
-    const app = {
+    window.app = {
       openFile,
       openFolder,
       updateContent,
@@ -67,22 +94,44 @@ export default function App() {
       cycleTheme,
       toggleSidebar: () => setSidebarVisible(v => !v),
       toggleToc: () => setTocVisible(v => !v),
-      toggleSource: () => setSourceVisible(v => !v),
+      toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },
+      toggleEdit: () => toggleEdit(),
       showDefaultBanner: () => {},
+      setRecents: (items: RecentItem[]) => setRecents(items),
       showUpdateBanner: (_current: string, latest: string) => setUpdateVersion(latest),
+      showToast: (msg: string) => toast(msg),
+      save: () => {
+        if (!editModeRef.current) {
+          toast('Switch to edit mode to save changes', { icon: '✏️' })
+          return
+        }
+        if (!dirtyRef.current) {
+          toast('No changes to save')
+          return
+        }
+        postMessage('saveFile', { content: editorContentRef.current })
+      },
+      onSaveComplete: (success: boolean) => {
+        if (success) {
+          setMarkdown(editorContentRef.current)
+          setDirty(false)
+          setEditMode(false)
+          setSourceVisible(false)
+          toast('Saved')
+        } else {
+          toast.error('Could not save the file')
+        }
+      },
       nativeAction: (action: string) => postMessage(action),
     }
-    ;(window as any).app = app
 
-    // Signal ready
     postMessage('ready')
 
-    // Drag and drop
     const onDragOver = (e: DragEvent) => e.preventDefault()
     const onDrop = (e: DragEvent) => {
       e.preventDefault()
       const file = e.dataTransfer?.files[0]
-      if (file) postMessage('openFilePath', { path: (file as any).path })
+      if (file?.path) postMessage('openFilePath', { path: file.path })
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
@@ -90,31 +139,34 @@ export default function App() {
       document.removeEventListener('dragover', onDragOver)
       document.removeEventListener('drop', onDrop)
     }
-  }, [openFile, openFolder, updateContent, setTheme, cycleTheme])
+  }, [openFile, openFolder, updateContent, setTheme, cycleTheme, toggleEdit])
 
   const ctx = {
     theme, currentFile, currentFolder, markdown, headings, activeHeadingId,
-    sidebarVisible, tocVisible, sourceVisible, fileDir, folderTree,
+    sidebarVisible, tocVisible, sourceVisible, editMode, dirty, fileDir, folderTree,
     setTheme, cycleTheme,
     toggleSidebar: () => setSidebarVisible(v => !v),
     toggleToc: () => setTocVisible(v => !v),
-    toggleSource: () => setSourceVisible(v => !v),
+    toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },
+    toggleEdit,
+    setDirty,
     setHeadings, setActiveHeading, openFile, openFolder, updateContent,
   }
 
   return (
+    <TooltipProvider>
     <AppContext.Provider value={ctx}>
-      <div className="relative h-screen bg-base">
+      <div className="relative h-screen bg-background">
         <TitleBar />
         <div className="flex h-full overflow-hidden">
           {currentFile ? (
             <>
               <Sidebar />
-              <Reader />
+              <Reader editorContentRef={editorContentRef} />
               <Toc />
             </>
           ) : (
-            <Welcome />
+            <Welcome recents={recents} />
           )}
         </div>
         {updateVersion && (
@@ -123,8 +175,9 @@ export default function App() {
             onDismiss={() => setUpdateVersion(null)}
           />
         )}
-        <ToastContainer />
+        <Toaster />
       </div>
     </AppContext.Provider>
+    </TooltipProvider>
   )
 }

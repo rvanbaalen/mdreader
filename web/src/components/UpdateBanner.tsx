@@ -12,7 +12,7 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
   const [done, setDone] = useState(false)
 
   // Expose completion callback for Swift
-  ;(window as any).__updateComplete = () => setDone(true)
+  window.__updateComplete = () => setDone(true)
 
   const handleInstall = () => {
     setInstalling(true)
@@ -25,8 +25,8 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
 
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 animate-[fadeUp_0.4s_ease-out]">
-      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-edge bg-surface/90 backdrop-blur-md shadow-lg">
-        <span className="font-sans text-sm text-secondary">
+      <div className="flex items-center gap-3 px-4 py-2 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
+        <span className="font-sans text-sm text-card-foreground">
           {done
             ? 'Update installed — restart to use the new version'
             : installing
@@ -36,7 +36,7 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
         {done ? (
           <button
             onClick={handleRestart}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-accent/20 text-accent-bright font-sans text-xs font-medium cursor-pointer border-none transition-all duration-150 hover:bg-accent/30 active:scale-95"
+            className="flex items-center gap-2 px-3 py-1 rounded-lg bg-accent/20 text-accent-bright font-sans text-xs font-medium cursor-pointer border-none transition-all duration-150 hover:bg-accent/30 active:scale-95"
           >
             <ArrowsClockwiseIcon size={13} />
             Restart
@@ -44,7 +44,7 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
         ) : !installing ? (
           <button
             onClick={handleInstall}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-accent/20 text-accent-bright font-sans text-xs font-medium cursor-pointer border-none transition-all duration-150 hover:bg-accent/30 active:scale-95"
+            className="flex items-center gap-2 px-3 py-1 rounded-lg bg-accent/20 text-accent-bright font-sans text-xs font-medium cursor-pointer border-none transition-all duration-150 hover:bg-accent/30 active:scale-95"
           >
             <DownloadSimpleIcon size={13} />
             Install
@@ -53,7 +53,7 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
         {!done && (
           <button
             onClick={onDismiss}
-            className="w-5 h-5 flex items-center justify-center rounded text-dim cursor-pointer border-none bg-transparent transition-colors hover:text-muted"
+            className="w-5 h-5 flex items-center justify-center rounded text-dim cursor-pointer border-none bg-transparent transition-colors hover:text-muted-foreground"
           >
             <XIcon size={12} />
           </button>

@@ -5,10 +5,10 @@ export function Toc() {
 
   return (
     <div
-      className={`shrink-0 pt-12 pb-4 transition-all duration-300 ease-out ${tocVisible ? 'w-[220px] pr-4' : 'w-0 pr-0 overflow-hidden opacity-0'}`}
+      className={`absolute top-12 bottom-4 right-4 z-10 w-[220px] transition-all duration-150 ease-out ${tocVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
     >
-      <div className="h-full rounded-xl border border-edge/40 bg-surface/60 backdrop-blur-[16px] py-6 overflow-y-auto">
-        <div className="px-6 pb-3 font-sans text-[11px] font-medium text-muted uppercase tracking-wider">
+      <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-[16px] py-6 overflow-y-auto shadow-lg shadow-background/50">
+        <div className="px-6 pb-3 font-sans text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
           On this page
         </div>
         <div className="flex flex-col">
@@ -19,13 +19,13 @@ export function Toc() {
               <button
                 key={h.id}
                 onClick={() => document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className={`flex items-center gap-2.5 w-full border-none bg-transparent font-sans text-left cursor-pointer px-6 py-1.5 transition-colors duration-100 truncate
+                className={`flex items-center gap-2 w-full border-none bg-transparent font-sans text-left cursor-pointer px-6 py-2 transition-colors duration-100 truncate
                   ${h.level <= 1 ? 'text-[13px] font-medium' : 'text-xs'}
-                  ${isActive ? 'text-accent-bright' : 'text-muted hover:text-primary hover:bg-surface-hover'}`}
+                  ${isActive ? 'text-accent-bright' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                 style={{ paddingLeft: `${24 + indent * 12}px` }}
               >
                 {isActive && (
-                  <span className="w-0.5 h-3.5 rounded-full bg-accent shrink-0 -ml-2.5" />
+                  <span className="w-0.5 h-4 rounded-full bg-accent shrink-0 -ml-2" />
                 )}
                 <span className="truncate">{h.text}</span>
               </button>

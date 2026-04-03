@@ -18,6 +18,8 @@ export interface AppState {
   sidebarVisible: boolean
   tocVisible: boolean
   sourceVisible: boolean
+  editMode: boolean
+  dirty: boolean
   folderTree: FileNode[]
   // Actions
   setTheme: (t: 'dark' | 'light') => void
@@ -25,6 +27,8 @@ export interface AppState {
   toggleSidebar: () => void
   toggleToc: () => void
   toggleSource: () => void
+  toggleEdit: () => void
+  setDirty: (d: boolean) => void
   setHeadings: (h: Heading[]) => void
   setActiveHeading: (id: string) => void
   fileDir: string | null
