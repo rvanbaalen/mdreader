@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0](https://github.com/rvanbaalen/mdreader/compare/v1.5.2...v1.6.0) (2026-04-03)
+
+
+### Features
+
+* add global type declarations for window bridge and File.path ([a052d2b](https://github.com/rvanbaalen/mdreader/commit/a052d2bd02bd71e7feeb959b2153bc07c93a1729))
+* add logging system for dev and production ([e6e3026](https://github.com/rvanbaalen/mdreader/commit/e6e30265815cc771732d5bc24f48fbabd5b6d797))
+* add shadcn button, toggle, tooltip, sonner components ([cf7f8d1](https://github.com/rvanbaalen/mdreader/commit/cf7f8d15d9b05a7152124539bbc890fb8a87d50c))
+* CLI flags, edit mode, recents, robust file watching ([0d32aa8](https://github.com/rvanbaalen/mdreader/commit/0d32aa84468bd3fc0f5ae7709b232d63af3daa65))
+
+
+### Bug Fixes
+
+* dev.sh reliability and cleanup ([dec9fc7](https://github.com/rvanbaalen/mdreader/commit/dec9fc77e40b981ab7afa5a057686d0c70fa0008))
+
 ## [1.5.2](https://github.com/rvanbaalen/mdreader/compare/v1.5.1...v1.5.2) (2026-04-02)
 
 
