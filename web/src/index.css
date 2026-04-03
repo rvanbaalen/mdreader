@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @font-face { font-family: 'Lora'; src: url('/fonts/Lora-Regular.otf'); font-weight: 400; font-style: normal; }
 @font-face { font-family: 'Lora'; src: url('/fonts/Lora-Bold.otf'); font-weight: 700; font-style: normal; }
@@ -12,43 +13,88 @@
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
+  /* shadcn semantic tokens — dark theme (default) */
+  --color-background: oklch(10% 0.01 260);
+  --color-foreground: oklch(93% 0.015 80);
+  --color-primary: oklch(93% 0.015 80);
+  --color-primary-foreground: oklch(10% 0.01 260);
+  --color-secondary: oklch(17% 0.015 260);
+  --color-secondary-foreground: oklch(93% 0.015 80);
+  --color-muted: oklch(17% 0.015 260);
+  --color-muted-foreground: oklch(45% 0.008 260);
+  --color-accent: oklch(62% 0.04 260);
+  --color-accent-foreground: oklch(93% 0.015 80);
+  --color-destructive: oklch(62% 0.2 25);
+  --color-destructive-foreground: oklch(93% 0.015 80);
+  --color-border: oklch(20% 0.015 260);
+  --color-input: oklch(20% 0.015 260);
+  --color-ring: oklch(62% 0.04 260);
+  --color-popover: oklch(14% 0.012 260);
+  --color-popover-foreground: oklch(65% 0.01 80);
+  --color-card: oklch(14% 0.012 260);
+  --color-card-foreground: oklch(65% 0.01 80);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* App-specific extras (not in shadcn) */
   --color-base: oklch(10% 0.01 260);
   --color-surface: oklch(14% 0.012 260);
   --color-surface-hover: oklch(17% 0.015 260);
   --color-edge: oklch(20% 0.015 260);
   --color-edge-subtle: oklch(16% 0.01 260);
-  --color-primary: oklch(93% 0.015 80);
-  --color-secondary: oklch(65% 0.01 80);
-  --color-muted: oklch(45% 0.008 260);
+  --color-subtle: oklch(45% 0.008 260);
   --color-dim: oklch(30% 0.008 260);
-  --color-accent: oklch(62% 0.04 260);
   --color-accent-bright: oklch(70% 0.05 260);
   --color-accent-dim: oklch(52% 0.03 260);
   --color-accent-glow: oklch(62% 0.04 260 / 0.1);
+  --color-accent-subtle: oklch(62% 0.04 260 / 0.05);
 }
 
 [data-theme="light"] {
+  /* shadcn semantic tokens — light theme */
+  --color-background: oklch(97% 0.005 80);
+  --color-foreground: oklch(15% 0.01 260);
+  --color-primary: oklch(15% 0.01 260);
+  --color-primary-foreground: oklch(97% 0.005 80);
+  --color-secondary: oklch(95% 0.005 80);
+  --color-secondary-foreground: oklch(15% 0.01 260);
+  --color-muted: oklch(95% 0.005 80);
+  --color-muted-foreground: oklch(55% 0.008 260);
+  --color-accent: oklch(42% 0.04 260);
+  --color-accent-foreground: oklch(97% 0.005 80);
+  --color-destructive: oklch(52% 0.2 25);
+  --color-destructive-foreground: oklch(97% 0.005 80);
+  --color-border: oklch(85% 0.01 80);
+  --color-input: oklch(85% 0.01 80);
+  --color-ring: oklch(42% 0.04 260);
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(35% 0.01 260);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(35% 0.01 260);
+
+  /* App-specific extras — light theme */
   --color-base: oklch(97% 0.005 80);
   --color-surface: oklch(100% 0 0);
   --color-surface-hover: oklch(95% 0.005 80);
   --color-edge: oklch(85% 0.01 80);
   --color-edge-subtle: oklch(90% 0.005 80);
-  --color-primary: oklch(15% 0.01 260);
-  --color-secondary: oklch(35% 0.01 260);
-  --color-muted: oklch(55% 0.008 260);
+  --color-subtle: oklch(55% 0.008 260);
   --color-dim: oklch(70% 0.005 260);
-  --color-accent: oklch(42% 0.04 260);
   --color-accent-bright: oklch(35% 0.05 260);
   --color-accent-dim: oklch(52% 0.03 260);
   --color-accent-glow: oklch(42% 0.04 260 / 0.08);
+  --color-accent-subtle: oklch(42% 0.04 260 / 0.04);
 }
 
 html, body, #root {
   height: 100%;
   overflow: hidden;
-  background: var(--color-base);
-  color: var(--color-secondary);
-  font-family: var(--font-serif);
+  background: var(--color-background);
+  color: var(--color-card-foreground);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s, color 0.3s;
 }
@@ -68,6 +114,14 @@ body { margin: 0; }
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+@keyframes slide-fade {
+  from { opacity: 0; transform: translateX(4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes spin-fade {
+  from { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
 }
 @keyframes ghostPulse {
   0% { transform: scale(1); opacity: 1; }
