@@ -40,11 +40,11 @@ cat > "$BUNDLE/Contents/Info.plist" << PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>mdreader</string>
+    <string>mdreader Dev</string>
     <key>CFBundleDisplayName</key>
-    <string>mdreader</string>
+    <string>mdreader Dev</string>
     <key>CFBundleIdentifier</key>
-    <string>com.rvanbaalen.mdreader</string>
+    <string>com.rvanbaalen.mdreader.dev</string>
     <key>CFBundleVersion</key>
     <string>${BUILD_NUMBER}</string>
     <key>CFBundleShortVersionString</key>
@@ -117,6 +117,15 @@ PLIST
 
 codesign --force --sign - --deep "$BUNDLE"
 
+# Kill any leftover dev instance and Vite
+pkill -f "mdreader.app/Contents/MacOS/mdreader" 2>/dev/null || true
+STALE_PID=$(lsof -ti tcp:5173 2>/dev/null || true)
+if [ -n "$STALE_PID" ]; then
+    echo "Killing stale process on port 5173 (PID $STALE_PID)..."
+    kill $STALE_PID 2>/dev/null || true
+    sleep 0.5
+fi
+
 # Install web dependencies if needed
 cd web
 [ -d "node_modules" ] || npm install --silent
@@ -126,18 +135,28 @@ npx vite &
 VITE_PID=$!
 cd ..
 
-# Wait for Vite to be ready
+# Wait for Vite to actually serve a page (not just accept connections)
 echo "Waiting for Vite..."
-for i in $(seq 1 30); do
-    if curl -s http://localhost:5173 > /dev/null 2>&1; then break; fi
+for i in $(seq 1 60); do
+    if curl -s -o /dev/null -w '%{http_code}' http://localhost:5173 2>/dev/null | grep -q '200'; then
+        break
+    fi
     sleep 0.5
 done
 
 # Launch app pointing at Vite dev server
+# Run the binary directly (not `open`) so MDREADER_DEV env var reaches the app.
+# `open` uses LaunchServices which does NOT pass environment variables.
 echo "Launching $APP_NAME (dev mode)..."
-MDREADER_DEV=1 open "$BUNDLE"
+MDREADER_DEV=1 "$BUNDLE/Contents/MacOS/$APP_NAME" &
 
 # Keep Vite running, clean up on Ctrl+C
-trap "kill $VITE_PID 2>/dev/null; exit 0" INT TERM
+cleanup() {
+    kill $VITE_PID 2>/dev/null || true
+    pkill -f "mdreader.app/Contents/MacOS/mdreader" 2>/dev/null || true
+    lsof -ti tcp:5173 2>/dev/null | xargs kill 2>/dev/null || true
+    exit 0
+}
+trap cleanup INT TERM
 echo "Vite running at http://localhost:5173 — Ctrl+C to stop"
 wait $VITE_PID
