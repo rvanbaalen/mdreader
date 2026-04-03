@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/rvanbaalen/mdreader/compare/v1.6.1...v1.6.2) (2026-04-03)
+
+
+### Bug Fixes
+
+* **app:** fall back to bundle path relaunch for dev builds ([9cfd102](https://github.com/rvanbaalen/mdreader/commit/9cfd1025e71825ec7fb85c25c3142f370b198cb2))
+
 ## [1.6.1](https://github.com/rvanbaalen/mdreader/compare/v1.6.0...v1.6.1) (2026-04-03)
 
 
