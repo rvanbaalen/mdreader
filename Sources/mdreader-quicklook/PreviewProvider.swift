@@ -23,7 +23,8 @@ class PreviewProvider: QLPreviewProvider {
     // MARK: - Image Resolution
 
     /// Scans markdown for relative image references and replaces them with base64 data URIs.
-    /// Matches the regex pattern from web/src/lib/markdown.ts:28.
+    /// Based on the regex pattern from web/src/lib/markdown.ts:28, excluding the mdfile://
+    /// lookahead which is app-specific and not relevant in the Quick Look context.
     private func resolveImages(in markdown: String, relativeTo baseDir: URL) -> String {
         let pattern = #"!\[([^\]]*)\]\((?!https?://|data:)([^)]+)\)"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else {
@@ -40,10 +41,11 @@ class PreviewProvider: QLPreviewProvider {
 
             let altRange = match.range(at: 1)
             let pathRange = match.range(at: 2)
-            guard let swiftPathRange = Range(pathRange, in: result),
+            guard let swiftAltRange = Range(altRange, in: result),
+                  let swiftPathRange = Range(pathRange, in: result),
                   let swiftFullRange = Range(match.range, in: result) else { continue }
 
-            let alt = altRange.location != NSNotFound ? (result as NSString).substring(with: altRange) : ""
+            let alt = String(result[swiftAltRange])
             let relativePath = String(result[swiftPathRange])
 
             let imageURL = baseDir.appendingPathComponent(relativePath)
@@ -94,6 +96,19 @@ class PreviewProvider: QLPreviewProvider {
         var css = (try? String(contentsOf: resourcesURL.appendingPathComponent("quicklook.css"), encoding: .utf8)) ?? ""
         let fontFaceCSS = buildFontFaceCSS(from: resourcesURL.appendingPathComponent("Fonts"))
         css = css.replacingOccurrences(of: "/* QUICKLOOK_FONT_FACE_DECLARATIONS */", with: fontFaceCSS)
+
+        // Fallback: if critical JS is missing, show raw markdown as plain text
+        guard !markedJS.isEmpty else {
+            let escaped = markdown
+                .replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+            return """
+            <!DOCTYPE html>
+            <html><body>
+            <pre style="white-space:pre-wrap;font-family:monospace;padding:24px">\(escaped)</pre>
+            </body></html>
+            """
+        }
 
         // Escape markdown for safe JS embedding
         let escapedMarkdown = escapeForJS(markdown)
