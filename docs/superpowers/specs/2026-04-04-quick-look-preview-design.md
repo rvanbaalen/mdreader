@@ -107,6 +107,14 @@ The Quick Look extension is invoked by Finder, not the app, so it doesn't benefi
 
 If the `_NSExtensionMain` linker approach proves problematic during implementation, fallback is a minimal `.xcodeproj` for just the extension target.
 
+## Distribution & Registration
+
+The `.appex` is embedded inside `mdreader.app/Contents/PlugIns/`, which is the standard location macOS scans for app extensions. No extra user steps are needed.
+
+- **Homebrew cask install:** The `.app` lands in `/Applications/`, macOS auto-discovers the extension.
+- **If first-launch registration is required:** Add a `pluginkit -a /Applications/mdreader.app/Contents/PlugIns/QuickLookPreview.appex` call to the Homebrew formula's post-install hook to force-register without requiring the user to open the app.
+- **Verify during implementation** whether macOS registers the extension immediately on install or only after first launch. Adjust the formula accordingly.
+
 ## CLAUDE.md Update
 
 Add Quick Look dev/test workflow instructions to CLAUDE.md so the tooling is documented for future sessions.
