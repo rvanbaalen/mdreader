@@ -150,6 +150,9 @@ QL_MODULE="QuickLookPreview"
 QL_RESOURCES="Sources/mdreader-quicklook/Resources"
 QL_SHARED_RESOURCES="Sources/mdreader/Resources"
 
+# Clean stale binary
+rm -f "$QL_MODULE"
+
 # Compile extension
 swiftc \
     -sdk "$(xcrun --show-sdk-path)" \
@@ -172,7 +175,7 @@ rm "$QL_MODULE"
 cp "$QL_SHARED_RESOURCES/marked.min.js" "$QL_APPEX/Contents/Resources/"
 cp "$QL_SHARED_RESOURCES/highlight.min.js" "$QL_APPEX/Contents/Resources/"
 cp "$QL_RESOURCES/quicklook.css" "$QL_APPEX/Contents/Resources/"
-cp "$QL_SHARED_RESOURCES/Fonts/"* "$QL_APPEX/Contents/Resources/Fonts/"
+cp -R "$QL_SHARED_RESOURCES/Fonts/." "$QL_APPEX/Contents/Resources/Fonts/"
 
 # Generate Info.plist for the extension
 cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
@@ -195,6 +198,8 @@ cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
     <string>QuickLookPreview</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>15.0</string>
     <key>NSExtension</key>
     <dict>
         <key>NSExtensionPointIdentifier</key>
