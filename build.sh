@@ -142,8 +142,84 @@ cat > "$BUNDLE/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
-# Ad-hoc codesign
-codesign --force --sign - --deep "$BUNDLE"
+# --- Quick Look Preview Extension ---
+echo "Building Quick Look extension..."
+QL_APPEX="QuickLookPreview.appex"
+QL_SRC="Sources/mdreader-quicklook/PreviewProvider.swift"
+QL_MODULE="QuickLookPreview"
+QL_RESOURCES="Sources/mdreader-quicklook/Resources"
+QL_SHARED_RESOURCES="Sources/mdreader/Resources"
+
+# Compile extension
+swiftc \
+    -sdk "$(xcrun --show-sdk-path)" \
+    -target "$(uname -m)-apple-macos15.0" \
+    -framework Foundation \
+    -framework Quartz \
+    -module-name "$QL_MODULE" \
+    -Xlinker -e -Xlinker _NSExtensionMain \
+    -o "$QL_MODULE" \
+    "$QL_SRC"
+
+# Assemble .appex bundle
+rm -rf "$QL_APPEX"
+mkdir -p "$QL_APPEX/Contents/MacOS"
+mkdir -p "$QL_APPEX/Contents/Resources/Fonts"
+cp "$QL_MODULE" "$QL_APPEX/Contents/MacOS/$QL_MODULE"
+rm "$QL_MODULE"
+
+# Copy resources into .appex
+cp "$QL_SHARED_RESOURCES/marked.min.js" "$QL_APPEX/Contents/Resources/"
+cp "$QL_SHARED_RESOURCES/highlight.min.js" "$QL_APPEX/Contents/Resources/"
+cp "$QL_RESOURCES/quicklook.css" "$QL_APPEX/Contents/Resources/"
+cp "$QL_SHARED_RESOURCES/Fonts/"* "$QL_APPEX/Contents/Resources/Fonts/"
+
+# Generate Info.plist for the extension
+cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>QuickLookPreview</string>
+    <key>CFBundleDisplayName</key>
+    <string>mdreader Quick Look</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.rvanbaalen.mdreader.quicklook</string>
+    <key>CFBundleVersion</key>
+    <string>${BUILD_NUMBER}</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${VERSION}</string>
+    <key>CFBundleExecutable</key>
+    <string>QuickLookPreview</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.quicklook.preview</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>QuickLookPreview.PreviewProvider</string>
+    </dict>
+    <key>QLSupportedContentTypes</key>
+    <array>
+        <string>net.daringfireball.markdown</string>
+    </array>
+    <key>QLSupportsSearchableItems</key>
+    <false/>
+</dict>
+</plist>
+QLPLIST
+
+# Embed in app bundle
+mkdir -p "$BUNDLE/Contents/PlugIns"
+cp -R "$QL_APPEX" "$BUNDLE/Contents/PlugIns/$QL_APPEX"
+rm -rf "$QL_APPEX"
+
+# Code sign: inner (extension) before outer (app)
+codesign --force --sign - "$BUNDLE/Contents/PlugIns/$QL_APPEX"
+codesign --force --sign - "$BUNDLE"
 
 echo "Done: $BUNDLE ($VERSION build $BUILD_NUMBER, $COMMIT)"
 echo "Run: open $APP_NAME.app"
