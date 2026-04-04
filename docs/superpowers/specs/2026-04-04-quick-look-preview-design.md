@@ -109,11 +109,23 @@ If the `_NSExtensionMain` linker approach proves problematic during implementati
 
 ## Distribution & Registration
 
-The `.appex` is embedded inside `mdreader.app/Contents/PlugIns/`, which is the standard location macOS scans for app extensions. No extra user steps are needed.
+The `.appex` is embedded inside `mdreader.app/Contents/PlugIns/`, which is the standard location macOS scans for app extensions. No extra user steps are needed — but the `.app` must be in `/Applications/` for macOS to discover it.
 
-- **Homebrew cask install:** The `.app` lands in `/Applications/`, macOS auto-discovers the extension.
-- **If first-launch registration is required:** Add a `pluginkit -a /Applications/mdreader.app/Contents/PlugIns/QuickLookPreview.appex` call to the Homebrew formula's post-install hook to force-register without requiring the user to open the app.
-- **Verify during implementation** whether macOS registers the extension immediately on install or only after first launch. Adjust the formula accordingly.
+### Prerequisite: Auto-install .app to /Applications
+
+Currently, `brew install mdreader` installs the CLI binary but the `.app` bundle requires a manual step to copy to `/Applications/`. This must be automated. The Homebrew formula's `post_install` block should:
+
+1. Copy `mdreader.app` to `/Applications/mdreader.app`
+2. Run `pluginkit -a /Applications/mdreader.app/Contents/PlugIns/QuickLookPreview.appex` to force-register the Quick Look extension (if needed)
+
+This change lives in the formula template at `rvanbaalen/homebrew-tap` (`.github/workflows/update-formula.yml`).
+
+### Extension discovery
+
+- **After install:** macOS scans `/Applications/` for app extensions. The Quick Look `.appex` should be registered automatically.
+- **If auto-discovery doesn't work:** The `pluginkit -a` call in `post_install` forces registration without requiring the user to open the app.
+- **On uninstall:** Homebrew's `uninstall` block should remove `/Applications/mdreader.app`. macOS will automatically deregister the extension.
+- **Verify during implementation** whether `pluginkit -a` is needed or if placing the `.app` in `/Applications/` is sufficient.
 
 ## CLAUDE.md Update
 
