@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.7.0](https://github.com/rvanbaalen/mdreader/compare/v1.6.2...v1.7.0) (2026-04-04)
+
+
+### Features
+
+* **icon:** redesign app icon with Phosphor BookOpen and dark/light mode ([86e2999](https://github.com/rvanbaalen/mdreader/commit/86e2999a7dc796142210147ac40ef9035b50be40))
+* **quicklook:** add Quick Look extension to build pipeline ([8f1cdd5](https://github.com/rvanbaalen/mdreader/commit/8f1cdd5b104fc1267be7b158742a06a8ddd4b257))
+* **quicklook:** add Quick Look preview extension provider ([8ac3960](https://github.com/rvanbaalen/mdreader/commit/8ac3960dd1ef24f65e2ece2b8c7f3c16aabf4040))
+* **quicklook:** add standalone CSS for Quick Look preview ([a01d1f6](https://github.com/rvanbaalen/mdreader/commit/a01d1f6b27b9b84da3efda0c22c785c6b0db8c7b))
+* **quicklook:** native markdown rendering with JSC + NSAttributedString ([20d12dd](https://github.com/rvanbaalen/mdreader/commit/20d12dd338b22694e87f5ad63cb216b29670e1f3))
+
+
+### Bug Fixes
+
+* **icon:** regenerate doc.icns with alpha transparency ([9f92c35](https://github.com/rvanbaalen/mdreader/commit/9f92c3550bf4f2d687ced7b8ccc38017616dde4d))
+* **quicklook:** add missing Foundation import ([41245d4](https://github.com/rvanbaalen/mdreader/commit/41245d4363336f828dce139207e679dbda357fa4))
+* **quicklook:** address build.sh review feedback ([5df31a9](https://github.com/rvanbaalen/mdreader/commit/5df31a9fcd142a367cef3f71c4a5f6ee827bb326))
+* **quicklook:** improve code quality per review feedback ([87260a3](https://github.com/rvanbaalen/mdreader/commit/87260a330fe0968ad12759e1571e7b112507fdce))
+* **quicklook:** restore anchor transition for smooth hover ([7d9c942](https://github.com/rvanbaalen/mdreader/commit/7d9c942128dc5c015c3de2ecece15923fc422ffc))
+* read version from release-please manifest instead of stale placeholder ([41fc283](https://github.com/rvanbaalen/mdreader/commit/41fc2834c341d426d0091f1cdacb2b65be801f4b))
+
+
+### Reverts
+
+* remove Quick Look extension (blocked by macOS 26 sandbox) ([2e440c1](https://github.com/rvanbaalen/mdreader/commit/2e440c1d110af2c8d2ebfcc3710f72d1b558ebe7))
+
 ## [1.6.2](https://github.com/rvanbaalen/mdreader/compare/v1.6.1...v1.6.2) (2026-04-03)
 
 
