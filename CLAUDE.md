@@ -19,6 +19,24 @@ npm run build  # production build (./build.sh)
 npm start      # open the built app
 ```
 
+## Quick Look Extension
+
+The app includes a Quick Look Preview Extension (`.appex`) that renders `.md` files when pressing Space in Finder.
+
+- Source: `Sources/mdreader-quicklook/PreviewProvider.swift`
+- Styles: `Sources/mdreader-quicklook/Resources/quicklook.css`
+- Built and embedded automatically by `build.sh`
+
+**Testing Quick Look changes:**
+
+```bash
+rm -rf .build/release mdreader.app && ./build.sh   # full rebuild
+qlmanage -r                                         # reset Quick Look cache
+qlmanage -p path/to/test.md                         # preview via CLI (or press Space in Finder)
+```
+
+The extension shares JS libraries and fonts with the main app (from `Sources/mdreader/Resources/`). CSS is standalone in `quicklook.css` — if you change content styles in `web/src/content.css`, update `quicklook.css` to match.
+
 ## Release
 
 - Releases are automated via release-please. Never manually bump versions.
