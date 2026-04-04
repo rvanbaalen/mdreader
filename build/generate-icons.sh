@@ -43,6 +43,10 @@ cd ..
 
 echo "  Building icon.icns..."
 iconutil --convert icns AppIcon.iconset -o icon.icns
+
+# Reuse the same iconset for doc.icns (document type icon for .md files)
+echo "  Building doc.icns..."
+iconutil --convert icns AppIcon.iconset -o doc.icns
 rm -rf AppIcon.iconset
 
 # --- Generate Asset Catalog with dark/light variants ---
@@ -162,5 +166,6 @@ rm -f icon-dark-1024.png icon-light-1024.png
 
 echo "Done! Generated:"
 echo "  icon.icns     - legacy app icon (dark variant)"
+echo "  doc.icns      - document type icon for .md files"
 echo "  Assets.car    - asset catalog with dark + light mode"
-ls -la icon.icns Assets.car 2>/dev/null | awk '{print "  " $NF " (" $5 " bytes)"}'
+ls -la icon.icns doc.icns Assets.car 2>/dev/null | awk '{print "  " $NF " (" $5 " bytes)"}'
