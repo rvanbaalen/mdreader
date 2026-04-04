@@ -19,6 +19,21 @@ npm run build  # production build (./build.sh)
 npm start      # open the built app
 ```
 
+## App Icon
+
+- Source SVGs: `build/icon-dark.svg` (dark mode) and `build/icon-light.svg` (light mode)
+- Uses the Phosphor BookOpen icon (regular weight, filled path) on a dark cool-blue background
+- Light/dark mode via Asset Catalog (`build/Assets.xcassets/`) compiled to `Assets.car`
+- Fallback `.icns` for older macOS versions
+
+**Regenerating icons after SVG changes:**
+
+```bash
+bash build/generate-icons.sh   # renders SVGs → PNGs → .icns + Assets.car
+```
+
+The script compiles `build/svg2png.swift` (a Swift SVG renderer) on first run, then generates all required sizes and the Asset Catalog. Both `icon.icns` and `Assets.car` are committed — no need to regenerate unless the SVGs change.
+
 ## Quick Look Extension
 
 The app includes a Quick Look Preview Extension (`.appex`) that renders `.md` files when pressing Space in Finder.
