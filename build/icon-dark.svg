@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Background: dark base with very subtle cool gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#1c1f30"/>
+      <stop offset="100%" stop-color="#161928"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon body -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+
+  <!-- Subtle inset border -->
+  <rect x="101" y="101" width="822" height="822" rx="184.5" fill="none" stroke="#2a3050" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Phosphor BookOpen icon (regular weight, filled) -->
+  <g transform="translate(256, 232) scale(2)">
+    <path fill="#ede7dd" d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z"/>
+  </g>
+</svg>

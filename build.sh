@@ -52,6 +52,9 @@ if [ -f "CHANGELOG.md" ]; then
 fi
 
 # Copy icons
+if [ -f "build/Assets.car" ]; then
+    cp "build/Assets.car" "$BUNDLE/Contents/Resources/Assets.car"
+fi
 if [ -f "build/icon.icns" ]; then
     cp "build/icon.icns" "$BUNDLE/Contents/Resources/AppIcon.icns"
 fi
