@@ -17,7 +17,7 @@ export function Recents({ items }: { items: RecentItem[] }) {
         <span className="font-sans text-[11px] font-medium text-dim uppercase tracking-wider">Recent</span>
       </div>
       <div className="flex flex-col gap-1">
-        {items.map((item) => (
+        {items.slice(0, 5).map((item) => (
           <button
             key={item.path}
             onClick={() => postMessage('openFilePath', { path: item.path })}

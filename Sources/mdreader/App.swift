@@ -105,7 +105,7 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
         window.isMovableByWindowBackground = true
-        window.minSize = NSSize(width: 600, height: 400)
+        window.minSize = NSSize(width: 600, height: 600)
         window.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1)
 
         let config = WKWebViewConfiguration()
