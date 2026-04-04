@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/rvanbaalen/mdreader/compare/v1.7.0...v1.7.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* increase min window height and cap recent files list at 5 ([a4b2f2f](https://github.com/rvanbaalen/mdreader/commit/a4b2f2f2b65c8f989bd0b649487e247788a69a51))
+
 ## [1.7.0](https://github.com/rvanbaalen/mdreader/compare/v1.6.2...v1.7.0) (2026-04-04)
 
 
