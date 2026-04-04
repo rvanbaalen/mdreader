@@ -73,12 +73,12 @@ QuickLookPreview.appex/
       highlight.min.js
       quicklook.css
       Fonts/
-        Lora-Regular.woff2
-        Lora-Italic.woff2
-        Lora-Bold.woff2
-        Lora-BoldItalic.woff2
-        DMSans-Variable.woff2
-        IBMPlexMono-Regular.woff2
+        Lora-Regular.otf
+        Lora-Bold.otf
+        Lora-Italic.otf
+        Lora-BoldItalic.otf
+        DMSans-Variable.ttf
+        IBMPlexMono-Regular.otf
 ```
 
 ## Build System Integration
