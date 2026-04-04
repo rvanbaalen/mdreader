@@ -5,8 +5,9 @@ APP_NAME="mdreader"
 BUNDLE="$APP_NAME.app"
 CONFIG="${1:-release}"
 
-# Version — updated automatically by release-please
-VERSION="1.5.0" # x-release-please-version
+# Version — release-please manifest is the source of truth
+_RP_FALLBACK="1.5.0" # x-release-please-version
+VERSION=$(python3 -c "import json; print(json.load(open('.release-please-manifest.json'))['.'])" 2>/dev/null || echo "$_RP_FALLBACK")
 COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 
