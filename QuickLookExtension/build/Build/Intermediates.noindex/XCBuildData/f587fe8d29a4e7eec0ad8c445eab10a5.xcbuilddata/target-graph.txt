@@ -1,0 +1,2 @@
+Target dependency graph (1 target)
+Target 'QuickLookPreview' in project 'QuickLookPreview' (no dependencies)

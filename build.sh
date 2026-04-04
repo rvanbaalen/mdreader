@@ -157,10 +157,12 @@ rm -f "$QL_MODULE"
 swiftc \
     -sdk "$(xcrun --show-sdk-path)" \
     -target "$(uname -m)-apple-macos15.0" \
+    -application-extension \
+    -parse-as-library \
     -framework Foundation \
     -framework Quartz \
+    -framework ExtensionFoundation \
     -module-name "$QL_MODULE" \
-    -Xlinker -e -Xlinker _NSExtensionMain \
     -o "$QL_MODULE" \
     "$QL_SRC"
 
@@ -184,6 +186,10 @@ cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
     <key>CFBundleName</key>
     <string>QuickLookPreview</string>
     <key>CFBundleDisplayName</key>
@@ -200,19 +206,28 @@ cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
     <string>XPC!</string>
     <key>LSMinimumSystemVersion</key>
     <string>15.0</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
     <key>NSExtension</key>
     <dict>
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.quicklook.preview</string>
         <key>NSExtensionPrincipalClass</key>
-        <string>QuickLookPreview.PreviewProvider</string>
+        <string>PreviewProvider</string>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>QLIsDataBasedPreview</key>
+            <true/>
+            <key>QLSupportedContentTypes</key>
+            <array>
+                <string>net.daringfireball.markdown</string>
+            </array>
+            <key>QLSupportsSearchableItems</key>
+            <false/>
+        </dict>
     </dict>
-    <key>QLSupportedContentTypes</key>
-    <array>
-        <string>net.daringfireball.markdown</string>
-    </array>
-    <key>QLSupportsSearchableItems</key>
-    <false/>
 </dict>
 </plist>
 QLPLIST

@@ -2,22 +2,25 @@ import Foundation
 import Quartz
 import UniformTypeIdentifiers
 
-@objc
 class PreviewProvider: QLPreviewProvider {
 
-    override func providePreview(for request: QLFilePreviewRequest) async throws -> QLPreviewReply {
+    func providePreview(for request: QLFilePreviewRequest, completionHandler handler: @escaping (QLPreviewReply?, (any Error)?) -> Void) {
         let fileURL = request.fileURL
-        let markdown = try String(contentsOf: fileURL, encoding: .utf8)
+        guard let markdown = try? String(contentsOf: fileURL, encoding: .utf8) else {
+            handler(nil, NSError(domain: "com.rvanbaalen.mdreader.quicklook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not read file"]))
+            return
+        }
         let baseDir = fileURL.deletingLastPathComponent()
         let resolved = resolveImages(in: markdown, relativeTo: baseDir)
         let html = buildHTML(markdown: resolved)
 
-        return QLPreviewReply(
+        let reply = QLPreviewReply(
             dataOfContentType: .html,
             contentSize: CGSize(width: 800, height: 600)
         ) { _ in
             Data(html.utf8)
         }
+        handler(reply, nil)
     }
 
     // MARK: - Image Resolution

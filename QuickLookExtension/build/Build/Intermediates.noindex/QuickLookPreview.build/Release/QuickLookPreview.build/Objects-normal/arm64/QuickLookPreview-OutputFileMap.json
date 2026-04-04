@@ -1,0 +1,16 @@
+{
+  "" : {
+    "const-values" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary.swiftconstvalues",
+    "dependencies" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary.d",
+    "diagnostics" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary.dia",
+    "emit-module-dependencies" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary-emit-module.dia",
+    "pch" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/QuickLookPreview-primary.swiftdeps"
+  },
+  "/Users/robin/Sites/projects/mdreader/Sources/mdreader-quicklook/PreviewProvider.swift" : {
+    "index-unit-output-path" : "/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/PreviewProvider.o",
+    "llvm-bc" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/PreviewProvider.bc",
+    "object" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/QuickLookPreview.build/Release/QuickLookPreview.build/Objects-normal/arm64/PreviewProvider.o"
+  }
+}

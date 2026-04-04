@@ -1,0 +1,65 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildOnly"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "0196cf9d902995fe4b5f60aeb148dec0758dd4e6deac80c1584d16dbbf5a17b1"
+    }
+  ],
+  "containerPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/QuickLookPreview.xcodeproj",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "activeArchitecture" : "arm64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "hostTargetedPlatform" : null,
+      "platform" : "macosx",
+      "sdk" : "macosx26.4",
+      "sdkVariant" : "macos",
+      "supportedArchitectures" : [
+        "arm64e",
+        "arm64",
+        "x86_64"
+      ],
+      "targetArchitecture" : "arm64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Products",
+      "derivedDataPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build",
+      "indexDataStoreFolderPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Users/robin/Sites/projects/mdreader/QuickLookExtension/build/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Release",
+    "overrides" : {
+      "commandLine" : {
+        "table" : {
+          "ONLY_ACTIVE_ARCH" : "NO"
+        }
+      },
+      "synthesized" : {
+        "table" : {
+          "ACTION" : "build",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "YES",
+          "ONLY_ACTIVE_ARCH" : "YES"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "launch",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}
