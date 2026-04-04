@@ -394,7 +394,7 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
     func checkDefaultApp() {
         guard let mdUTI = UTType(filenameExtension: "md") else { return }
         if let handler = LSCopyDefaultRoleHandlerForContentType(mdUTI.identifier as CFString, .viewer)?.takeRetainedValue() as String? {
-            if handler.lowercased() != "com.rvanbaalen.mdreader" {
+            if handler.lowercased() != "nl.robinvanbaalen.mdreader" {
                 webView.evaluateJavaScript("app.showDefaultBanner()")
             }
         } else {
@@ -610,7 +610,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func restartApp() {
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.rvanbaalen.mdreader"
+        let bundleId = Bundle.main.bundleIdentifier ?? "nl.robinvanbaalen.mdreader"
         let appPath = Bundle.main.bundleURL.path
         // Try bundle ID first (finds new version after brew upgrade), fall back to path (dev builds)
         let task = Process()

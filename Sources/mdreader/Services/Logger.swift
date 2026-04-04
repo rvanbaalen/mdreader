@@ -14,7 +14,7 @@ final class MDLogger {
     private let logFile: URL
     private let maxSize: UInt64 = 5 * 1024 * 1024 // 5 MB
     private let maxRotated = 3
-    private let queue = DispatchQueue(label: "com.rvanbaalen.mdreader.logger")
+    private let queue = DispatchQueue(label: "nl.robinvanbaalen.mdreader.logger")
     private var handle: FileHandle?
     private let isDevMode: Bool
     private let dateFormatter: DateFormatter = {

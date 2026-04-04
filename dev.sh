@@ -46,7 +46,7 @@ cat > "$BUNDLE/Contents/Info.plist" << PLIST
     <key>CFBundleDisplayName</key>
     <string>mdreader Dev</string>
     <key>CFBundleIdentifier</key>
-    <string>com.rvanbaalen.mdreader.dev</string>
+    <string>nl.robinvanbaalen.mdreader.dev</string>
     <key>CFBundleVersion</key>
     <string>${BUILD_NUMBER}</string>
     <key>CFBundleShortVersionString</key>
