@@ -1,208 +1,259 @@
-import Foundation
+import AppKit
 import Quartz
-import UniformTypeIdentifiers
+import CoreText
+import JavaScriptCore
 
-class PreviewProvider: QLPreviewProvider {
+class PreviewViewController: NSViewController, QLPreviewingController {
 
-    func providePreview(for request: QLFilePreviewRequest, completionHandler handler: @escaping (QLPreviewReply?, (any Error)?) -> Void) {
-        let fileURL = request.fileURL
-        guard let markdown = try? String(contentsOf: fileURL, encoding: .utf8) else {
-            handler(nil, NSError(domain: "com.rvanbaalen.mdreader.quicklook", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not read file"]))
+    private let textView = NSTextView()
+    private let scrollView = NSScrollView()
+
+    private let bgColor = NSColor(red: 0.04, green: 0.04, blue: 0.06, alpha: 1)
+
+    override func loadView() {
+        registerFonts()
+
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = true
+        scrollView.backgroundColor = bgColor
+
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.autoresizingMask = [.width]
+        textView.textContainerInset = NSSize(width: 40, height: 40)
+        textView.backgroundColor = bgColor
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.textContainer?.widthTracksTextView = true
+
+        self.view = scrollView
+    }
+
+    func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
+        guard let markdown = try? String(contentsOf: url, encoding: .utf8) else {
+            handler(NSError(domain: "nl.robinvanbaalen.mdreader.quicklook", code: 1,
+                           userInfo: [NSLocalizedDescriptionKey: "Could not read file"]))
             return
         }
-        let baseDir = fileURL.deletingLastPathComponent()
-        let resolved = resolveImages(in: markdown, relativeTo: baseDir)
-        let html = buildHTML(markdown: resolved)
 
-        let reply = QLPreviewReply(
-            dataOfContentType: .html,
-            contentSize: CGSize(width: 800, height: 600)
-        ) { _ in
-            Data(html.utf8)
+        // Render markdown → HTML via JavaScriptCore + marked.js
+        let html = renderMarkdownToHTML(markdown)
+
+        // Wrap in full document with inline CSS
+        let css = loadCSS()
+        let document = """
+        <html>
+        <head><meta charset="utf-8"><style>\(css)</style></head>
+        <body><article class="content">\(html)</article></body>
+        </html>
+        """
+
+        // Convert HTML → NSAttributedString for display
+        if let data = document.data(using: .utf8),
+           let attributed = NSAttributedString(html: data, documentAttributes: nil) {
+            textView.textStorage?.setAttributedString(attributed)
+        } else {
+            // Fallback: plain text
+            textView.string = markdown
+            textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+            textView.textColor = NSColor(red: 0.88, green: 0.88, blue: 0.9, alpha: 1)
         }
-        handler(reply, nil)
+
+        handler(nil)
     }
 
-    // MARK: - Image Resolution
+    // MARK: - Font Registration
 
-    /// Scans markdown for relative image references and replaces them with base64 data URIs.
-    /// Based on the regex pattern from web/src/lib/markdown.ts:28, excluding the mdfile://
-    /// lookahead which is app-specific and not relevant in the Quick Look context.
-    private func resolveImages(in markdown: String, relativeTo baseDir: URL) -> String {
-        let pattern = #"!\[([^\]]*)\]\((?!https?://|data:)([^)]+)\)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else {
-            return markdown
-        }
+    private func registerFonts() {
+        let bundle = Bundle(for: PreviewViewController.self)
+        let fontsURL = bundle.bundleURL
+            .appendingPathComponent("Contents")
+            .appendingPathComponent("Resources")
+            .appendingPathComponent("Fonts")
 
-        let nsMarkdown = markdown as NSString
-        let matches = regex.matches(in: markdown, range: NSRange(location: 0, length: nsMarkdown.length))
-
-        // Process in reverse so replacement ranges stay valid
-        var result = markdown
-        for match in matches.reversed() {
-            guard match.numberOfRanges >= 3 else { continue }
-
-            let altRange = match.range(at: 1)
-            let pathRange = match.range(at: 2)
-            guard let swiftAltRange = Range(altRange, in: result),
-                  let swiftPathRange = Range(pathRange, in: result),
-                  let swiftFullRange = Range(match.range, in: result) else { continue }
-
-            let alt = String(result[swiftAltRange])
-            let relativePath = String(result[swiftPathRange])
-
-            let imageURL = baseDir.appendingPathComponent(relativePath)
-            guard let imageData = try? Data(contentsOf: imageURL) else { continue }
-
-            let mime = mimeType(for: imageURL.pathExtension)
-            let base64 = imageData.base64EncodedString()
-            let dataURI = "data:\(mime);base64,\(base64)"
-
-            result.replaceSubrange(swiftFullRange, with: "![\(alt)](\(dataURI))")
-        }
-
-        return result
-    }
-
-    // MARK: - MIME Type
-
-    /// Maps file extensions to MIME types. Same mapping as LocalFileHandler in App.swift.
-    private func mimeType(for ext: String) -> String {
-        switch ext.lowercased() {
-        case "png": return "image/png"
-        case "jpg", "jpeg": return "image/jpeg"
-        case "gif": return "image/gif"
-        case "svg": return "image/svg+xml"
-        case "webp": return "image/webp"
-        case "bmp": return "image/bmp"
-        case "ico": return "image/x-icon"
-        default: return "application/octet-stream"
+        for file in ["Lora-Regular.otf", "Lora-Bold.otf", "Lora-Italic.otf",
+                      "Lora-BoldItalic.otf", "IBMPlexMono-Regular.otf", "DMSans-Variable.ttf"] {
+            let url = fontsURL.appendingPathComponent(file)
+            if FileManager.default.fileExists(atPath: url.path) {
+                var err: Unmanaged<CFError>?
+                CTFontManagerRegisterFontsForURL(url as CFURL, .process, &err)
+            }
         }
     }
 
-    // MARK: - HTML Builder
+    // MARK: - Markdown → HTML via JavaScriptCore
 
-    /// Assembles a self-contained HTML document with inline CSS, fonts, and JS.
-    /// Uses innerHTML to render the user's own local markdown file (no sanitization
-    /// needed per design spec — this is local file preview, not untrusted input).
-    private func buildHTML(markdown: String) -> String {
-        let bundle = Bundle(for: PreviewProvider.self)
+    private func renderMarkdownToHTML(_ markdown: String) -> String {
+        let bundle = Bundle(for: PreviewViewController.self)
         let resourcesURL = bundle.bundleURL
             .appendingPathComponent("Contents")
             .appendingPathComponent("Resources")
 
-        // Load JS libraries
-        let markedJS = (try? String(contentsOf: resourcesURL.appendingPathComponent("marked.min.js"), encoding: .utf8)) ?? ""
-        let highlightJS = (try? String(contentsOf: resourcesURL.appendingPathComponent("highlight.min.js"), encoding: .utf8)) ?? ""
-
-        // Load and patch CSS with embedded fonts
-        var css = (try? String(contentsOf: resourcesURL.appendingPathComponent("quicklook.css"), encoding: .utf8)) ?? ""
-        let fontFaceCSS = buildFontFaceCSS(from: resourcesURL.appendingPathComponent("Fonts"))
-        css = css.replacingOccurrences(of: "/* QUICKLOOK_FONT_FACE_DECLARATIONS */", with: fontFaceCSS)
-
-        // Fallback: if critical JS is missing, show raw markdown as plain text
-        guard !markedJS.isEmpty else {
-            let escaped = markdown
+        // Load marked.js
+        let markedURL = resourcesURL.appendingPathComponent("marked.min.js")
+        guard let markedJS = try? String(contentsOf: markedURL, encoding: .utf8) else {
+            // Fallback: return escaped plain text
+            return markdown
                 .replacingOccurrences(of: "&", with: "&amp;")
                 .replacingOccurrences(of: "<", with: "&lt;")
-            return """
-            <!DOCTYPE html>
-            <html><body>
-            <pre style="white-space:pre-wrap;font-family:monospace;padding:24px">\(escaped)</pre>
-            </body></html>
-            """
+                .replacingOccurrences(of: "\n", with: "<br>")
         }
 
-        // Escape markdown for safe JS embedding
-        let escapedMarkdown = escapeForJS(markdown)
+        let ctx = JSContext()!
+        ctx.evaluateScript(markedJS)
+        ctx.evaluateScript("marked.use({ gfm: true, breaks: false });")
 
-        // Note: innerHTML is intentional — we render the user's own local file,
-        // not untrusted input. No DOMPurify needed (see design spec).
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>\(css)</style>
-        </head>
-        <body>
-        <article class="content" id="content"></article>
-        <script>\(markedJS)</script>
-        <script>\(highlightJS)</script>
-        <script>
-        (function() {
-            var renderer = new marked.Renderer();
-            renderer.code = function(args) {
-                var text = args.text;
-                var lang = args.lang;
-                var highlighted = lang && hljs.getLanguage(lang)
-                    ? hljs.highlight(text, { language: lang }).value
-                    : hljs.highlightAuto(text).value;
-                var langAttr = lang ? ' data-lang="' + lang + '"' : '';
-                return '<pre' + langAttr + '><code class="hljs">' + highlighted + '</code></pre>';
-            };
-            marked.use({ renderer: renderer, gfm: true, breaks: false });
-            var md = \(escapedMarkdown);
-            document.getElementById('content').innerHTML = marked.parse(md);
-        })();
-        </script>
-        </body>
-        </html>
-        """
+        // Escape markdown for JS embedding
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: markdown, options: .fragmentsAllowed),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return markdown
+        }
+
+        let result = ctx.evaluateScript("marked.parse(\(jsonString))")
+        return result?.toString() ?? markdown
     }
 
-    // MARK: - Font Embedding
+    // MARK: - CSS
 
-    /// Generates base64 @font-face CSS declarations for all bundled fonts.
-    private func buildFontFaceCSS(from fontsDir: URL) -> String {
-        struct FontSpec {
-            let filename: String
-            let family: String
-            let weight: String
-            let style: String
-            let format: String
+    private func loadCSS() -> String {
+        let bundle = Bundle(for: PreviewViewController.self)
+        let cssURL = bundle.bundleURL
+            .appendingPathComponent("Contents")
+            .appendingPathComponent("Resources")
+            .appendingPathComponent("quicklook.css")
+
+        guard let css = try? String(contentsOf: cssURL, encoding: .utf8) else {
+            return ""
         }
 
-        let fonts: [FontSpec] = [
-            FontSpec(filename: "Lora-Regular.otf", family: "Lora", weight: "400", style: "normal", format: "opentype"),
-            FontSpec(filename: "Lora-Bold.otf", family: "Lora", weight: "700", style: "normal", format: "opentype"),
-            FontSpec(filename: "Lora-Italic.otf", family: "Lora", weight: "400", style: "italic", format: "opentype"),
-            FontSpec(filename: "Lora-BoldItalic.otf", family: "Lora", weight: "700", style: "italic", format: "opentype"),
-            FontSpec(filename: "DMSans-Variable.ttf", family: "DM Sans", weight: "100 1000", style: "normal", format: "truetype"),
-            FontSpec(filename: "IBMPlexMono-Regular.otf", family: "IBM Plex Mono", weight: "400", style: "normal", format: "opentype"),
-        ]
+        // NSAttributedString(html:) doesn't support CSS custom properties or oklch().
+        // Resolve all var() references and oklch() values to concrete hex colors.
+        return resolveCSS(css)
+    }
 
-        var declarations: [String] = []
-        for font in fonts {
-            let fileURL = fontsDir.appendingPathComponent(font.filename)
-            guard let data = try? Data(contentsOf: fileURL) else { continue }
-            let base64 = data.base64EncodedString()
-            let mime = font.filename.hasSuffix(".ttf") ? "font/ttf" : "font/otf"
-
-            declarations.append("""
-            @font-face {
-              font-family: '\(font.family)';
-              src: url('data:\(mime);base64,\(base64)') format('\(font.format)');
-              font-weight: \(font.weight);
-              font-style: \(font.style);
+    /// Resolves CSS custom properties (var(--xxx)) and oklch() values to concrete values
+    /// that NSAttributedString(html:) can understand.
+    private func resolveCSS(_ css: String) -> String {
+        // Extract variable definitions from :root block
+        var variables: [String: String] = [:]
+        let varDefPattern = #"--([\w-]+)\s*:\s*([^;]+)"#
+        if let regex = try? NSRegularExpression(pattern: varDefPattern) {
+            let matches = regex.matches(in: css, range: NSRange(location: 0, length: (css as NSString).length))
+            for match in matches {
+                if let nameRange = Range(match.range(at: 1), in: css),
+                   let valueRange = Range(match.range(at: 2), in: css) {
+                    let name = "--" + String(css[nameRange])
+                    let value = String(css[valueRange]).trimmingCharacters(in: .whitespaces)
+                    variables[name] = value
+                }
             }
-            """)
         }
 
-        return declarations.joined(separator: "\n")
+        // Replace var(--xxx) references with their values
+        var resolved = css
+        let varRefPattern = #"var\((--[\w-]+)\)"#
+        if let regex = try? NSRegularExpression(pattern: varRefPattern) {
+            // Iterate until no more var() references (handles nested vars)
+            for _ in 0..<3 {
+                let matches = regex.matches(in: resolved, range: NSRange(location: 0, length: (resolved as NSString).length))
+                if matches.isEmpty { break }
+                for match in matches.reversed() {
+                    if let nameRange = Range(match.range(at: 1), in: resolved),
+                       let fullRange = Range(match.range, in: resolved) {
+                        let varName = String(resolved[nameRange])
+                        if let value = variables[varName] {
+                            resolved.replaceSubrange(fullRange, with: value)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Convert oklch() to hex — NSAttributedString doesn't support oklch
+        resolved = convertOklchToHex(in: resolved)
+
+        // Remove :root and @media blocks that only define variables
+        // (they're now inlined, and NSAttributedString doesn't understand them)
+        resolved = removeVariableBlocks(resolved)
+
+        return resolved
     }
 
-    // MARK: - JS Escaping
+    /// Converts oklch(L% C H) and oklch(L% C H / A) values to hex colors.
+    private func convertOklchToHex(in css: String) -> String {
+        let pattern = #"oklch\(([^)]+)\)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return css }
 
-    /// Produces a JSON-encoded string literal safe for embedding in JavaScript.
-    private func escapeForJS(_ string: String) -> String {
-        guard let data = try? JSONSerialization.data(
-            withJSONObject: string,
-            options: .fragmentsAllowed
-        ) else {
-            return "\"\""
+        var result = css
+        let matches = regex.matches(in: css, range: NSRange(location: 0, length: (css as NSString).length))
+
+        for match in matches.reversed() {
+            guard let fullRange = Range(match.range, in: result),
+                  let argsRange = Range(match.range(at: 1), in: result) else { continue }
+
+            let args = String(result[argsRange])
+            if let hex = oklchToHex(args) {
+                result.replaceSubrange(fullRange, with: hex)
+            }
         }
-        return String(data: data, encoding: .utf8) ?? "\"\""
+        return result
+    }
+
+    /// Parse "L% C H" or "L% C H / A" and convert to hex.
+    private func oklchToHex(_ args: String) -> String? {
+        // Split on "/" for alpha
+        let parts = args.split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
+        let lchParts = parts[0].split(whereSeparator: { $0.isWhitespace || $0 == "%" })
+            .map { String($0) }
+
+        guard lchParts.count >= 3,
+              let l = Double(lchParts[0].replacingOccurrences(of: "%", with: "")),
+              let c = Double(lchParts[1]),
+              let h = Double(lchParts[2]) else { return nil }
+
+        let alpha = parts.count > 1 ? Double(parts[1]) ?? 1.0 : 1.0
+
+        // OKLCh → sRGB conversion
+        let L = l / 100.0
+        let a_ = c * cos(h * .pi / 180.0)
+        let b_ = c * sin(h * .pi / 180.0)
+
+        // OKLab → linear sRGB
+        let l_ = L + 0.3963377774 * a_ + 0.2158037573 * b_
+        let m_ = L - 0.1055613458 * a_ - 0.0638541728 * b_
+        let s_ = L - 0.0894841775 * a_ - 1.2914855480 * b_
+
+        let l3 = l_ * l_ * l_
+        let m3 = m_ * m_ * m_
+        let s3 = s_ * s_ * s_
+
+        let r_lin = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3
+        let g_lin = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3
+        let b_lin = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3
+
+        func gammaCorrect(_ x: Double) -> Double {
+            x <= 0.0031308 ? 12.92 * x : 1.055 * pow(x, 1.0 / 2.4) - 0.055
+        }
+
+        let r = Int(max(0, min(255, round(gammaCorrect(r_lin) * 255))))
+        let g = Int(max(0, min(255, round(gammaCorrect(g_lin) * 255))))
+        let b = Int(max(0, min(255, round(gammaCorrect(b_lin) * 255))))
+
+        if alpha < 1.0 {
+            let a = Int(max(0, min(255, round(alpha * 255))))
+            return String(format: "rgba(%d, %d, %d, %.2f)", r, g, b, alpha)
+        }
+        return String(format: "#%02x%02x%02x", r, g, b)
+    }
+
+    /// Remove :root {} and @media blocks that only contain variable definitions.
+    private func removeVariableBlocks(_ css: String) -> String {
+        var result = css
+        // Remove :root { ... } blocks
+        let rootPattern = #":root\s*\{[^}]*\}"#
+        if let regex = try? NSRegularExpression(pattern: rootPattern, options: .dotMatchesLineSeparators) {
+            result = regex.stringByReplacingMatches(in: result, range: NSRange(location: 0, length: (result as NSString).length), withTemplate: "")
+        }
+        return result
     }
 }

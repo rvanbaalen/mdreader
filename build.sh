@@ -162,9 +162,10 @@ swiftc \
     -target "$(uname -m)-apple-macos15.0" \
     -application-extension \
     -parse-as-library \
-    -framework Foundation \
+    -framework AppKit \
     -framework Quartz \
-    -framework ExtensionFoundation \
+    -framework CoreText \
+    -Xlinker -e -Xlinker _NSExtensionMain \
     -module-name "$QL_MODULE" \
     -o "$QL_MODULE" \
     "$QL_SRC"
@@ -178,7 +179,6 @@ rm "$QL_MODULE"
 
 # Copy resources into .appex
 cp "$QL_SHARED_RESOURCES/marked.min.js" "$QL_APPEX/Contents/Resources/"
-cp "$QL_SHARED_RESOURCES/highlight.min.js" "$QL_APPEX/Contents/Resources/"
 cp "$QL_RESOURCES/quicklook.css" "$QL_APPEX/Contents/Resources/"
 cp -R "$QL_SHARED_RESOURCES/Fonts/." "$QL_APPEX/Contents/Resources/Fonts/"
 
@@ -198,7 +198,7 @@ cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
     <key>CFBundleDisplayName</key>
     <string>mdreader Quick Look</string>
     <key>CFBundleIdentifier</key>
-    <string>com.rvanbaalen.mdreader.quicklook</string>
+    <string>nl.robinvanbaalen.mdreader.quicklook</string>
     <key>CFBundleVersion</key>
     <string>${BUILD_NUMBER}</string>
     <key>CFBundleShortVersionString</key>
@@ -218,11 +218,9 @@ cat > "$QL_APPEX/Contents/Info.plist" << QLPLIST
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.quicklook.preview</string>
         <key>NSExtensionPrincipalClass</key>
-        <string>PreviewProvider</string>
+        <string>QuickLookPreview.PreviewViewController</string>
         <key>NSExtensionAttributes</key>
         <dict>
-            <key>QLIsDataBasedPreview</key>
-            <true/>
             <key>QLSupportedContentTypes</key>
             <array>
                 <string>net.daringfireball.markdown</string>
