@@ -26,6 +26,7 @@ interface AppBridge {
 interface Window {
   app: AppBridge
   __updateComplete?: () => void
+  __updateFailed?: () => void
 }
 
 /** Electron/WKWebView file drop includes a path property */

@@ -10,12 +10,15 @@ interface UpdateBannerProps {
 export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
   const [installing, setInstalling] = useState(false)
   const [done, setDone] = useState(false)
+  const [failed, setFailed] = useState(false)
 
-  // Expose completion callback for Swift
+  // Expose completion callbacks for Swift
   window.__updateComplete = () => setDone(true)
+  window.__updateFailed = () => setFailed(true)
 
   const handleInstall = () => {
     setInstalling(true)
+    setFailed(false)
     postMessage('installUpdate')
   }
 
@@ -29,9 +32,11 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
         <span className="font-sans text-sm text-card-foreground">
           {done
             ? 'Update installed — restart to use the new version'
-            : installing
-              ? 'Installing update...'
-              : `mdreader ${latest} is available`}
+            : failed
+              ? 'Update failed — try again or update manually'
+              : installing
+                ? 'Installing update...'
+                : `mdreader ${latest} is available`}
         </span>
         {done ? (
           <button
@@ -40,6 +45,14 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
           >
             <ArrowsClockwiseIcon size={13} />
             Restart
+          </button>
+        ) : failed ? (
+          <button
+            onClick={handleInstall}
+            className="flex items-center gap-2 px-3 py-1 rounded-lg bg-accent/20 text-accent-bright font-sans text-xs font-medium cursor-pointer border-none transition-all duration-150 hover:bg-accent/30 active:scale-95"
+          >
+            <ArrowsClockwiseIcon size={13} />
+            Retry
           </button>
         ) : !installing ? (
           <button

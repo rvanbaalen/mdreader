@@ -604,18 +604,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try? process.run()
             process.waitUntilExit()
             DispatchQueue.main.async {
-                wc.webView.evaluateJavaScript("window.__updateComplete?.()")
+                if process.terminationStatus == 0 {
+                    wc.webView.evaluateJavaScript("window.__updateComplete?.()")
+                } else {
+                    log.warn("Brew upgrade failed (exit \(process.terminationStatus))", component: "Update")
+                    wc.webView.evaluateJavaScript("window.__updateFailed?.()")
+                }
             }
         }
     }
 
     func restartApp() {
-        let bundleId = Bundle.main.bundleIdentifier ?? "nl.robinvanbaalen.mdreader"
-        let appPath = Bundle.main.bundleURL.path
-        // Try bundle ID first (finds new version after brew upgrade), fall back to path (dev builds)
+        // After brew upgrade, /opt/homebrew/opt/mdreader always symlinks to the latest Cellar version
+        let brewAppPaths = [
+            "/opt/homebrew/opt/mdreader/mdreader.app",
+            "/usr/local/opt/mdreader/mdreader.app"
+        ]
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", "sleep 1 && open -b \"\(bundleId)\" 2>/dev/null || open \"\(appPath)\""]
+        if let brewApp = brewAppPaths.first(where: { FileManager.default.fileExists(atPath: $0) }) {
+            // Replace stale /Applications copy with symlink to brew version, then launch
+            // The rm + ln runs after the app quits (sleep 1), so the bundle is no longer in use
+            let target = "/Applications/mdreader.app"
+            task.arguments = ["-c", "sleep 1 && rm -rf \"\(target)\" && ln -sf \"\(brewApp)\" \"\(target)\" ; open \"\(brewApp)\""]
+        } else {
+            // Dev build or manual install — just relaunch from current bundle
+            task.arguments = ["-c", "sleep 1 && open \"\(Bundle.main.bundleURL.path)\""]
+        }
         try? task.run()
         NSApplication.shared.terminate(nil)
     }
