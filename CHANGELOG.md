@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/rvanbaalen/mdreader/compare/v1.7.1...v1.7.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **update:** handle brew upgrade failures with error feedback and retry ([228a58a](https://github.com/rvanbaalen/mdreader/commit/228a58add61f8d9837a36bd5b9d8274c5a90679d))
+
 ## [1.7.1](https://github.com/rvanbaalen/mdreader/compare/v1.7.0...v1.7.1) (2026-04-04)
 
 
