@@ -108,7 +108,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
             editorContentRef.current = e.target.value
             setDirty(e.target.value !== markdown)
           }}
-          className={`absolute inset-0 max-w-[900px] mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words ${contentPadding}`}
+          className={`absolute inset-0 max-w-7xl mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words ${contentPadding}`}
           spellCheck={false}
         />
       </div>
@@ -119,7 +119,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
   if (sourceVisible) {
     return (
       <div className="flex-1 overflow-y-scroll overflow-x-hidden relative scroll-smooth">
-        <pre className={`max-w-[900px] mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] whitespace-pre-wrap break-words select-text ${contentPadding}`}>
+        <pre className={`max-w-7xl mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] whitespace-pre-wrap break-words select-text ${contentPadding}`}>
           <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
         </pre>
       </div>
@@ -132,7 +132,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
       <div className="sticky top-0 h-0 pointer-events-none z-0 overflow-visible">
         <div className="h-screen w-full bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
       </div>
-      <div ref={contentRef} className={`content relative z-[1] max-w-[900px] mx-auto pt-24 pb-12 ${contentPadding}`} />
+      <div ref={contentRef} className={`content relative z-[1] max-w-7xl mx-auto pt-24 pb-12 ${contentPadding}`} />
     </div>
   )
 }
