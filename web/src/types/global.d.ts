@@ -17,9 +17,10 @@ interface AppBridge {
   showDefaultBanner: () => void
   setRecents: (items: RecentItem[]) => void
   showUpdateBanner: (current: string, latest: string) => void
-  showToast: (msg: string) => void
+  showToast: (type: string, msg: string) => void
   save: () => void
   onSaveComplete: (success: boolean) => void
+  showAbout: (version: string, commit: string, build: string) => void
   nativeAction: (action: string) => void
 }
 

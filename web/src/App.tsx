@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { UpdateBanner } from './components/UpdateBanner'
+import { AboutDialog } from './components/AboutDialog'
 import { postMessage } from './lib/bridge'
 import type { Heading } from './lib/markdown'
 
@@ -28,6 +29,7 @@ export default function App() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
   const [recents, setRecents] = useState<RecentItem[]>([])
+  const [aboutInfo, setAboutInfo] = useState<{ version: string; commit: string; build: string } | null>(null)
 
   const editorContentRef = useRef<string>('')
   const dirtyRef = useRef(false)
@@ -99,7 +101,10 @@ export default function App() {
       showDefaultBanner: () => {},
       setRecents: (items: RecentItem[]) => setRecents(items),
       showUpdateBanner: (_current: string, latest: string) => setUpdateVersion(latest),
-      showToast: (msg: string) => toast(msg),
+      showToast: (type: string, msg: string) => {
+        const fn = type === 'success' ? toast.success : type === 'error' ? toast.error : toast
+        fn(msg)
+      },
       save: () => {
         if (!editModeRef.current) {
           toast('Switch to edit mode to save changes', { icon: '✏️' })
@@ -122,6 +127,7 @@ export default function App() {
           toast.error('Could not save the file')
         }
       },
+      showAbout: (version: string, commit: string, build: string) => setAboutInfo({ version, commit, build }),
       nativeAction: (action: string) => postMessage(action),
     }
 
@@ -176,6 +182,7 @@ export default function App() {
           />
         )}
         <Toaster />
+        <AboutDialog info={aboutInfo} onClose={() => setAboutInfo(null)} />
       </div>
     </AppContext.Provider>
     </TooltipProvider>

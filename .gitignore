@@ -13,3 +13,4 @@ mdreader.app/
 .claude/
 skills-lock.json
 CLAUDE.local.md
+Sources/mdreader/Version.swift
