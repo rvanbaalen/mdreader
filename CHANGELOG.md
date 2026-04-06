@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/rvanbaalen/mdreader/compare/v1.7.2...v1.7.3) (2026-04-06)
+
+
+### Bug Fixes
+
+* **reader:** increase content max-width from 900px to 7xl ([552eff2](https://github.com/rvanbaalen/mdreader/commit/552eff20bca7a24ddb1bfdb32757483e0ea32a65))
+
 ## [1.7.2](https://github.com/rvanbaalen/mdreader/compare/v1.7.1...v1.7.2) (2026-04-05)
 
 
