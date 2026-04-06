@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/rvanbaalen/mdreader/compare/v1.7.3...v1.8.0) (2026-04-06)
+
+
+### Features
+
+* **about:** replace native NSAlert about dialog with in-web AboutDialog ([0c73b83](https://github.com/rvanbaalen/mdreader/commit/0c73b83421143e5383236299372c7d526fccd92d))
+
 ## [1.7.3](https://github.com/rvanbaalen/mdreader/compare/v1.7.2...v1.7.3) (2026-04-06)
 
 
