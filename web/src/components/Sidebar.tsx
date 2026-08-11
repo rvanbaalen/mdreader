@@ -10,7 +10,7 @@ function FolderRow({ node }: { node: FileNode }) {
     <div>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 w-full h-[30px] px-2 border-none bg-transparent font-sans text-[13px] font-medium text-muted-foreground cursor-pointer rounded-md transition-colors duration-100 hover:bg-muted hover:text-card-foreground"
+        className="flex items-center gap-1 w-full h-8 px-2 border-none bg-transparent font-sans text-xs font-medium text-muted-foreground cursor-pointer rounded-md transition-colors duration-100 hover:bg-muted hover:text-card-foreground"
       >
         <span className="w-4 shrink-0 flex items-center justify-center text-dim">
           <CaretRightIcon size={10} className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`} />
@@ -33,7 +33,6 @@ function FileRow({ node }: { node: FileNode }) {
   const { currentFile } = useApp()
   const isActive = currentFile === node.name
   const [showTip, setShowTip] = useState(false)
-  const nameRef = useState<HTMLSpanElement | null>(null)
 
   return (
     <button
@@ -43,7 +42,7 @@ function FileRow({ node }: { node: FileNode }) {
         if (span && span.scrollWidth > span.clientWidth) setShowTip(true)
       }}
       onMouseLeave={() => setShowTip(false)}
-      className={`relative flex items-center gap-1 w-full h-[30px] px-2 border-none bg-transparent font-sans text-[13px] cursor-pointer rounded-md transition-colors duration-100
+      className={`relative flex items-center gap-1 w-full h-8 px-2 border-none bg-transparent font-sans text-xs cursor-pointer rounded-md transition-colors duration-100
         ${isActive ? 'bg-accent-glow text-accent-bright' : 'text-card-foreground hover:bg-muted'}`}
     >
       <span className={`w-4 shrink-0 flex items-center justify-center ${isActive ? 'text-accent' : 'text-muted-foreground'}`}>
@@ -76,11 +75,11 @@ export function Sidebar() {
 
   return (
     <div
-      className={`absolute top-12 bottom-4 left-4 z-10 w-[260px] transition-all duration-300 ease-out ${sidebarVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
+      className={`absolute top-12 bottom-4 left-4 z-10 w-[260px] transition-all duration-300 ease-enter ${sidebarVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
     >
       <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-[16px] py-6 overflow-y-auto shadow-lg shadow-background/50">
         {currentFolder && (
-          <div className="px-6 pb-3 font-sans text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="px-6 pb-3 font-sans text-xs font-medium text-muted-foreground">
             {currentFolder}
           </div>
         )}
