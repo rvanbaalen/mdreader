@@ -24,7 +24,6 @@ export default function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false)
   const [tocVisible, setTocVisible] = useState(false)
   const [sourceVisible, setSourceVisible] = useState(false)
-  const [editMode, setEditMode] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [fileDir, setFileDir] = useState<string | null>(null)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
@@ -36,12 +35,12 @@ export default function App() {
 
   const editorContentRef = useRef<string>('')
   const dirtyRef = useRef(false)
-  const editModeRef = useRef(false)
+  const sourceVisibleRef = useRef(false)
   const currentFileRef = useRef<string | null>(null)
 
   // Keep refs in sync
   dirtyRef.current = dirty
-  editModeRef.current = editMode
+  sourceVisibleRef.current = sourceVisible
   currentFileRef.current = currentFile
 
   const setTheme = useCallback((t: 'dark' | 'light') => {
@@ -66,7 +65,6 @@ export default function App() {
     setMarkdown(md)
     editorContentRef.current = md
     setSourceVisible(false)
-    setEditMode(false)
     setDirty(false)
   }, [])
 
@@ -82,20 +80,15 @@ export default function App() {
     setDirty(false)
   }, [])
 
-  const toggleEdit = useCallback(() => {
-    setEditMode(prev => {
-      if (!prev) {
-        setSourceVisible(true)
-        setSearchOpen(false)
-      }
-      return !prev
-    })
+  // Leaving the source editor discards unsaved edits (the draft re-syncs
+  // from the saved markdown once dirty is cleared)
+  const toggleSource = useCallback(() => {
+    setSourceVisible(v => !v)
+    setDirty(false)
   }, [])
 
-  // Search only makes sense with a document on screen, and the textarea in
-  // edit mode has no DOM to highlight
   const openSearch = useCallback(() => {
-    if (currentFileRef.current && !editModeRef.current) setSearchOpen(true)
+    if (currentFileRef.current) setSearchOpen(true)
   }, [])
 
   // Expose API for Swift bridge — use refs to avoid stale closures
@@ -108,8 +101,9 @@ export default function App() {
       cycleTheme,
       toggleSidebar: () => setSidebarVisible(v => !v),
       toggleToc: () => setTocVisible(v => !v),
-      toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },
-      toggleEdit: () => toggleEdit(),
+      toggleSource,
+      // The native Edit Source menu item (Cmd+E) still calls toggleEdit
+      toggleEdit: toggleSource,
       showDefaultBanner: () => setDefaultBannerVisible(true),
       setRecents: (items: RecentItem[]) => setRecents(items),
       showUpdateBanner: (_current: string, latest: string) => setUpdateVersion(latest),
@@ -118,8 +112,8 @@ export default function App() {
         fn(msg)
       },
       save: () => {
-        if (!editModeRef.current) {
-          toast('Switch to edit mode to save changes', { icon: '✏️' })
+        if (!sourceVisibleRef.current) {
+          toast('Open the source view to edit')
           return
         }
         if (!dirtyRef.current) {
@@ -132,8 +126,6 @@ export default function App() {
         if (success) {
           setMarkdown(editorContentRef.current)
           setDirty(false)
-          setEditMode(false)
-          setSourceVisible(false)
           toast('Saved')
         } else {
           toast.error('Could not save the file')
@@ -167,16 +159,15 @@ export default function App() {
       document.removeEventListener('drop', onDrop)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [openFile, openFolder, updateContent, setTheme, cycleTheme, toggleEdit, openSearch])
+  }, [openFile, openFolder, updateContent, setTheme, cycleTheme, toggleSource, openSearch])
 
   const ctx = {
     theme, currentFile, currentFolder, markdown, headings, activeHeadingId,
-    sidebarVisible, tocVisible, sourceVisible, editMode, dirty, fileDir, folderTree, searchOpen,
+    sidebarVisible, tocVisible, sourceVisible, dirty, fileDir, folderTree, searchOpen,
     setTheme, cycleTheme, setSearchOpen,
     toggleSidebar: () => setSidebarVisible(v => !v),
     toggleToc: () => setTocVisible(v => !v),
-    toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },
-    toggleEdit,
+    toggleSource,
     setDirty,
     setHeadings, setActiveHeading, openFile, openFolder, updateContent,
   }

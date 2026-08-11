@@ -10,7 +10,7 @@ interface ReaderProps {
 }
 
 export function Reader({ editorContentRef }: ReaderProps) {
-  const { markdown, sourceVisible, editMode, fileDir, sidebarVisible, tocVisible, setHeadings, setActiveHeading, setDirty } = useApp()
+  const { markdown, sourceVisible, dirty, fileDir, sidebarVisible, tocVisible, setHeadings, setActiveHeading, setDirty } = useApp()
   setFileDir(fileDir)
   const contentRef = useRef<HTMLDivElement>(null)
   const renderedRef = useRef<HTMLDivElement>(null)
@@ -18,8 +18,17 @@ export function Reader({ editorContentRef }: ReaderProps) {
   const sourceRef = useRef<HTMLPreElement>(null)
   // Bumped after the markdown DOM is rebuilt so SearchBar re-applies marks
   const [renderTick, setRenderTick] = useState(0)
+  // Editable source buffer; follows `markdown` while there are no unsaved edits
+  const [draft, setDraft] = useState(markdown)
   const getContentRoot = useCallback(() => contentRef.current, [])
   const getSourceRoot = useCallback(() => sourceRef.current, [])
+
+  useEffect(() => {
+    if (!dirty) {
+      setDraft(markdown)
+      editorContentRef.current = markdown
+    }
+  }, [markdown, dirty, editorContentRef])
 
   useEffect(() => {
     if (sourceVisible || !contentRef.current) return
@@ -63,14 +72,10 @@ export function Reader({ editorContentRef }: ReaderProps) {
     setRenderTick(t => t + 1)
   }, [markdown, sourceVisible, setHeadings])
 
-  // Sync textarea when entering edit mode
+  // Focus the editor when entering source view, without scroll-jumping
   useEffect(() => {
-    if (editMode && textareaRef.current) {
-      textareaRef.current.value = markdown
-      editorContentRef.current = markdown
-      textareaRef.current.focus()
-    }
-  }, [editMode, markdown, editorContentRef])
+    if (sourceVisible) textareaRef.current?.focus({ preventScroll: true })
+  }, [sourceVisible])
 
   // Scroll tracking for ToC
   useEffect(() => {
@@ -95,10 +100,48 @@ export function Reader({ editorContentRef }: ReaderProps) {
     return () => reader.removeEventListener('scroll', onScroll)
   }, [setActiveHeading])
 
-  const highlightedSource = useMemo(() => {
-    if (!sourceVisible || editMode || !markdown) return ''
-    return hljs.highlight(markdown, { language: 'markdown' }).value
-  }, [sourceVisible, editMode, markdown])
+  const highlightedDraft = useMemo(() => {
+    if (!sourceVisible || !draft) return ''
+    const html = hljs.highlight(draft, { language: 'markdown' }).value
+    // A trailing space keeps the final empty line rendered so the
+    // highlight layer stays exactly as tall as the textarea
+    return draft.endsWith('\n') ? html + ' ' : html
+  }, [sourceVisible, draft])
+
+  const onDraftChange = (value: string) => {
+    setDraft(value)
+    editorContentRef.current = value
+    setDirty(value !== markdown)
+  }
+
+  // Tab indents and Shift+Tab outdents (line-wise over selections)
+  // instead of the browser default of moving focus out of the editor
+  const onEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Tab') return
+    e.preventDefault()
+    const ta = e.currentTarget
+    const { selectionStart, selectionEnd, value } = ta
+    const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+    const spansLines = value.slice(selectionStart, selectionEnd).includes('\n')
+
+    // execCommand keeps the native undo stack intact, unlike setRangeText
+    if (!e.shiftKey && !spansLines) {
+      document.execCommand('insertText', false, '  ')
+      return
+    }
+
+    const nextBreak = value.indexOf('\n', selectionEnd)
+    const blockEnd = nextBreak === -1 ? value.length : nextBreak
+    const block = value.slice(lineStart, blockEnd)
+    const shifted = block
+      .split('\n')
+      .map(line => (e.shiftKey ? line.replace(/^ {1,2}/, '') : '  ' + line))
+      .join('\n')
+    if (shifted === block) return
+    ta.setSelectionRange(lineStart, blockEnd)
+    document.execCommand('insertText', false, shifted)
+    ta.setSelectionRange(lineStart, lineStart + shifted.length)
+  }
 
   // Panel compensation lives on the scroller so the 800px column (DESIGN.md
   // max content width) centers in the space the panels leave over: panel
@@ -107,33 +150,28 @@ export function Reader({ editorContentRef }: ReaderProps) {
   const scrollerClass = `h-full overflow-y-scroll overflow-x-hidden relative scroll-smooth transition-[padding] duration-300 ease-move ${panelPad}`
   const columnClass = 'max-w-200 mx-auto pt-24 pb-24'
 
-  // Edit mode: editable textarea
-  if (editMode) {
-    return (
-      <div className={`flex-1 overflow-hidden relative transition-[padding] duration-300 ease-move ${panelPad}`}>
-        <textarea
-          ref={textareaRef}
-          defaultValue={markdown}
-          onChange={(e) => {
-            editorContentRef.current = e.target.value
-            setDirty(e.target.value !== markdown)
-          }}
-          className={`block w-full h-full ${columnClass} font-mono text-xs leading-body text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words`}
-          spellCheck={false}
-        />
-      </div>
-    )
-  }
-
-  // Source view: read-only highlighted
+  // Source view: syntax-highlighted editor. A transparent textarea overlays
+  // the highlighted pre with identical text metrics, so the pre paints the
+  // colors while the textarea owns input, caret, and selection.
   if (sourceVisible) {
+    const editorMetrics = 'pt-24 pb-24 font-mono text-xs leading-body whitespace-pre-wrap break-words'
     return (
       <div className="flex-1 relative overflow-hidden">
-        <SearchBar getRoot={getSourceRoot} renderKey={markdown} />
+        <SearchBar getRoot={getSourceRoot} renderKey={draft} />
         <div className={scrollerClass}>
-          <pre ref={sourceRef} className={`${columnClass} font-mono text-xs leading-body whitespace-pre-wrap break-words select-text`}>
-            <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
-          </pre>
+          <div className="relative max-w-200 mx-auto min-h-full">
+            <pre ref={sourceRef} aria-hidden className={`${editorMetrics} m-0`}>
+              <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedDraft }} />
+            </pre>
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => onDraftChange(e.target.value)}
+              onKeyDown={onEditorKeyDown}
+              className={`absolute inset-0 w-full h-full ${editorMetrics} bg-transparent text-transparent caret-foreground border-none outline-none resize-none overflow-hidden`}
+              spellCheck={false}
+            />
+          </div>
         </div>
       </div>
     )
