@@ -103,9 +103,9 @@ export function Reader({ editorContentRef }: ReaderProps) {
   // Panel compensation lives on the scroller so the 800px column (DESIGN.md
   // max content width) centers in the space the panels leave over: panel
   // footprint = 16px margin + width + 24px gap on each side
-  const panelPad = `${sidebarVisible ? 'pl-[300px]' : 'pl-16'} ${tocVisible ? 'pr-[260px]' : 'pr-16'}`
+  const panelPad = `${sidebarVisible ? 'pl-75' : 'pl-16'} ${tocVisible ? 'pr-65' : 'pr-16'}`
   const scrollerClass = `h-full overflow-y-scroll overflow-x-hidden relative scroll-smooth transition-[padding] duration-300 ease-move ${panelPad}`
-  const columnClass = 'max-w-[800px] mx-auto pt-24 pb-24'
+  const columnClass = 'max-w-200 mx-auto pt-24 pb-24'
 
   // Edit mode: editable textarea
   if (editMode) {
@@ -118,7 +118,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
             editorContentRef.current = e.target.value
             setDirty(e.target.value !== markdown)
           }}
-          className={`block w-full h-full ${columnClass} font-mono text-[14px] leading-[1.7] text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words`}
+          className={`block w-full h-full ${columnClass} font-mono text-xs leading-body text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words`}
           spellCheck={false}
         />
       </div>
@@ -131,7 +131,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
       <div className="flex-1 relative overflow-hidden">
         <SearchBar getRoot={getSourceRoot} renderKey={markdown} />
         <div className={scrollerClass}>
-          <pre ref={sourceRef} className={`${columnClass} font-mono text-[14px] leading-[1.7] whitespace-pre-wrap break-words select-text`}>
+          <pre ref={sourceRef} className={`${columnClass} font-mono text-xs leading-body whitespace-pre-wrap break-words select-text`}>
             <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
           </pre>
         </div>
@@ -142,12 +142,11 @@ export function Reader({ editorContentRef }: ReaderProps) {
   // Rendered markdown view
   return (
     <div className="flex-1 relative overflow-hidden">
+      {/* Full-bleed so the glow spans the padded scroller's left/right insets */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
       <SearchBar getRoot={getContentRoot} renderKey={renderTick} />
       <div ref={renderedRef} className={scrollerClass}>
-        <div className="sticky top-0 h-0 pointer-events-none z-0 overflow-visible">
-          <div className="h-screen w-full bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
-        </div>
-        <div ref={contentRef} className={`content relative z-[1] ${columnClass}`} />
+        <div ref={contentRef} className={`content relative z-1 ${columnClass}`} />
       </div>
     </div>
   )
