@@ -29,6 +29,7 @@ export default function App() {
   const [fileDir, setFileDir] = useState<string | null>(null)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [defaultBannerVisible, setDefaultBannerVisible] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
   const [recents, setRecents] = useState<RecentItem[]>([])
   const [aboutInfo, setAboutInfo] = useState<{ version: string; commit: string; build: string } | null>(null)
@@ -36,10 +37,12 @@ export default function App() {
   const editorContentRef = useRef<string>('')
   const dirtyRef = useRef(false)
   const editModeRef = useRef(false)
+  const currentFileRef = useRef<string | null>(null)
 
   // Keep refs in sync
   dirtyRef.current = dirty
   editModeRef.current = editMode
+  currentFileRef.current = currentFile
 
   const setTheme = useCallback((t: 'dark' | 'light') => {
     setThemeState(t)
@@ -83,9 +86,16 @@ export default function App() {
     setEditMode(prev => {
       if (!prev) {
         setSourceVisible(true)
+        setSearchOpen(false)
       }
       return !prev
     })
+  }, [])
+
+  // Search only makes sense with a document on screen, and the textarea in
+  // edit mode has no DOM to highlight
+  const openSearch = useCallback(() => {
+    if (currentFileRef.current && !editModeRef.current) setSearchOpen(true)
   }, [])
 
   // Expose API for Swift bridge — use refs to avoid stale closures
@@ -130,6 +140,7 @@ export default function App() {
         }
       },
       showAbout: (version: string, commit: string, build: string) => setAboutInfo({ version, commit, build }),
+      openSearch,
       nativeAction: (action: string) => postMessage(action),
     }
 
@@ -141,18 +152,27 @@ export default function App() {
       const file = e.dataTransfer?.files[0]
       if (file?.path) postMessage('openFilePath', { path: file.path })
     }
+    // Redundant with the native Find menu item so ⌘F works in dev mode too
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        openSearch()
+      }
+    }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
+    document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('dragover', onDragOver)
       document.removeEventListener('drop', onDrop)
+      document.removeEventListener('keydown', onKeyDown)
     }
-  }, [openFile, openFolder, updateContent, setTheme, cycleTheme, toggleEdit])
+  }, [openFile, openFolder, updateContent, setTheme, cycleTheme, toggleEdit, openSearch])
 
   const ctx = {
     theme, currentFile, currentFolder, markdown, headings, activeHeadingId,
-    sidebarVisible, tocVisible, sourceVisible, editMode, dirty, fileDir, folderTree,
-    setTheme, cycleTheme,
+    sidebarVisible, tocVisible, sourceVisible, editMode, dirty, fileDir, folderTree, searchOpen,
+    setTheme, cycleTheme, setSearchOpen,
     toggleSidebar: () => setSidebarVisible(v => !v),
     toggleToc: () => setTocVisible(v => !v),
     toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },

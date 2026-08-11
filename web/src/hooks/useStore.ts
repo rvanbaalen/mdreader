@@ -20,6 +20,7 @@ export interface AppState {
   sourceVisible: boolean
   editMode: boolean
   dirty: boolean
+  searchOpen: boolean
   folderTree: FileNode[]
   // Actions
   setTheme: (t: 'dark' | 'light') => void
@@ -29,6 +30,7 @@ export interface AppState {
   toggleSource: () => void
   toggleEdit: () => void
   setDirty: (d: boolean) => void
+  setSearchOpen: (open: boolean) => void
   setHeadings: (h: Heading[]) => void
   setActiveHeading: (id: string) => void
   fileDir: string | null

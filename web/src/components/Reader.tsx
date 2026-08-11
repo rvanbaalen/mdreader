@@ -1,8 +1,9 @@
-import { useRef, useEffect, useMemo, type MutableRefObject } from 'react'
+import { useRef, useEffect, useMemo, useState, useCallback, type MutableRefObject } from 'react'
 import { useApp } from '../hooks/useStore'
 import { renderMarkdown, extractHeadings, setFileDir } from '../lib/markdown'
 import { toast } from 'sonner'
 import hljs from 'highlight.js'
+import { SearchBar } from './SearchBar'
 
 interface ReaderProps {
   editorContentRef: MutableRefObject<string>
@@ -14,6 +15,11 @@ export function Reader({ editorContentRef }: ReaderProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const renderedRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const sourceRef = useRef<HTMLPreElement>(null)
+  // Bumped after the markdown DOM is rebuilt so SearchBar re-applies marks
+  const [renderTick, setRenderTick] = useState(0)
+  const getContentRoot = useCallback(() => contentRef.current, [])
+  const getSourceRoot = useCallback(() => sourceRef.current, [])
 
   useEffect(() => {
     if (sourceVisible || !contentRef.current) return
@@ -54,6 +60,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
     el.classList.remove('animate-content')
     void el.offsetWidth
     el.classList.add('animate-content')
+    setRenderTick(t => t + 1)
   }, [markdown, sourceVisible, setHeadings])
 
   // Sync textarea when entering edit mode
@@ -97,7 +104,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
   // max content width) centers in the space the panels leave over: panel
   // footprint = 16px margin + width + 24px gap on each side
   const panelPad = `${sidebarVisible ? 'pl-[300px]' : 'pl-16'} ${tocVisible ? 'pr-[260px]' : 'pr-16'}`
-  const scrollerClass = `flex-1 overflow-y-scroll overflow-x-hidden relative scroll-smooth transition-[padding] duration-300 ease-move ${panelPad}`
+  const scrollerClass = `h-full overflow-y-scroll overflow-x-hidden relative scroll-smooth transition-[padding] duration-300 ease-move ${panelPad}`
   const columnClass = 'max-w-[800px] mx-auto pt-24 pb-24'
 
   // Edit mode: editable textarea
@@ -121,21 +128,27 @@ export function Reader({ editorContentRef }: ReaderProps) {
   // Source view: read-only highlighted
   if (sourceVisible) {
     return (
-      <div className={scrollerClass}>
-        <pre className={`${columnClass} font-mono text-[14px] leading-[1.7] whitespace-pre-wrap break-words select-text`}>
-          <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
-        </pre>
+      <div className="flex-1 relative overflow-hidden">
+        <SearchBar getRoot={getSourceRoot} renderKey={markdown} />
+        <div className={scrollerClass}>
+          <pre ref={sourceRef} className={`${columnClass} font-mono text-[14px] leading-[1.7] whitespace-pre-wrap break-words select-text`}>
+            <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
+          </pre>
+        </div>
       </div>
     )
   }
 
   // Rendered markdown view
   return (
-    <div ref={renderedRef} className={scrollerClass}>
-      <div className="sticky top-0 h-0 pointer-events-none z-0 overflow-visible">
-        <div className="h-screen w-full bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
+    <div className="flex-1 relative overflow-hidden">
+      <SearchBar getRoot={getContentRoot} renderKey={renderTick} />
+      <div ref={renderedRef} className={scrollerClass}>
+        <div className="sticky top-0 h-0 pointer-events-none z-0 overflow-visible">
+          <div className="h-screen w-full bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
+        </div>
+        <div ref={contentRef} className={`content relative z-[1] ${columnClass}`} />
       </div>
-      <div ref={contentRef} className={`content relative z-[1] ${columnClass}`} />
     </div>
   )
 }
