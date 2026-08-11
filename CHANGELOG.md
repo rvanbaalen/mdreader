@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.9.0](https://github.com/rvanbaalen/mdreader/compare/v1.8.0...v1.9.0) (2026-08-11)
+
+
+### Features
+
+* **editor:** merge edit mode into a highlighted source editor ([37317b4](https://github.com/rvanbaalen/mdreader/commit/37317b4948af82e2d53d669f5f04c9394576fdfc))
+* **search:** in-document text search on Cmd+F ([6e75361](https://github.com/rvanbaalen/mdreader/commit/6e75361136ca7af29899002df6ddc09d019a1775))
+* **ui:** implement the default-reader prompt banner ([0d3ed4c](https://github.com/rvanbaalen/mdreader/commit/0d3ed4c2d222609a34257385535f4a0f9cbcc2ea))
+
+
+### Bug Fixes
+
+* **design:** wire DESIGN.md type scale and motion tokens into Tailwind ([7a82f92](https://github.com/rvanbaalen/mdreader/commit/7a82f92109b99a226d1e3866c4a3da9b7704329b))
+* **reader:** align top-level list text flush with headings ([f750e48](https://github.com/rvanbaalen/mdreader/commit/f750e48a920f4ed92d569292621a0e95aa19535c))
+* **reader:** restore 800px measure and consistent vertical rhythm ([0755aa2](https://github.com/rvanbaalen/mdreader/commit/0755aa23e2df69a066a00d01f33572b0430227ae))
+* **reader:** span the ambient glow across the panel padding ([782af75](https://github.com/rvanbaalen/mdreader/commit/782af7554613edf45fa3727d057d847865b2d869))
+* **ui:** align chrome components with the design system ([3afa998](https://github.com/rvanbaalen/mdreader/commit/3afa9981ced60242a3c9a363d1c3fda5b659f8c6))
+* **windows:** prevent duplicate windows on launch, close, and reopen ([5de80ed](https://github.com/rvanbaalen/mdreader/commit/5de80ed842d695f541d235bf2c6a434963a59b37))
+
 ## [1.8.0](https://github.com/rvanbaalen/mdreader/compare/v1.7.3...v1.8.0) (2026-04-06)
 
 
