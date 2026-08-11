@@ -421,9 +421,9 @@ class WindowController: NSObject, WKScriptMessageHandler, WKNavigationDelegate, 
 
     func windowWillClose(_ notification: Notification) {
         watcher?.cancel()
-        DispatchQueue.main.async { [self] in
-            AppDelegate.shared.windowDidClose(self)
-        }
+        // Synchronous: a closing window must never linger in windowControllers,
+        // where open-file events could still "reuse" it
+        AppDelegate.shared.windowDidClose(self)
     }
 }
 
@@ -467,7 +467,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag { createWindow(center: true) }
+        // Check our own list, not `flag`: minimized/hidden windows report as
+        // not visible and would spawn a duplicate window on Dock click
+        if windowControllers.isEmpty { createWindow(center: true) }
         return true
     }
 
@@ -478,13 +480,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Handles files opened via Finder/LaunchServices. Reuses an empty window
+    /// even before its web view is ready — during launch the welcome window
+    /// hasn't loaded yet, and creating a second window here caused doubles.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            // Reuse an empty window if one exists
-            if let wc = windowControllers.first(where: { $0.currentFile == nil && $0.webReady }) {
-                var isDir: ObjCBool = false
-                if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
-                    if isDir.boolValue { wc.openFolder(url) } else { wc.openFile(url) }
+            if let wc = windowControllers.first(where: { $0.currentFile == nil && $0.pendingFile == nil }) {
+                if wc.webReady {
+                    var isDir: ObjCBool = false
+                    if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
+                        if isDir.boolValue { wc.openFolder(url) } else { wc.openFile(url) }
+                    }
+                } else {
+                    wc.pendingFile = url
                 }
             } else {
                 let wc = createWindow()
@@ -506,11 +514,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return wc
     }
 
+    /// Removes a closed window immediately, then decides welcome-vs-quit one
+    /// runloop turn later so an open/reopen event racing the close wins and
+    /// no duplicate window appears.
     func windowDidClose(_ wc: WindowController) {
         let hadFile = wc.currentFile != nil
         windowControllers.removeAll { $0 === wc }
+        guard windowControllers.isEmpty else { return }
 
-        if windowControllers.isEmpty {
+        DispatchQueue.main.async { [self] in
+            guard windowControllers.isEmpty else { return }
             if hadFile {
                 // Last file window closed — open a welcome window
                 createWindow(center: true)
