@@ -7,12 +7,14 @@
   line-height: 1.2;
   transition: color 0.3s;
 }
-.content h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
-.content h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin-top: 48px; margin-bottom: 16px; }
-.content h3 { font-size: 22px; font-weight: 600; margin-top: 32px; margin-bottom: 8px; }
-.content h4 { font-size: 20px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; }
+/* Heading sizes follow the DESIGN.md type scale: h1 2xl(40) h2 xl(32) h3 lg(24) */
+.content h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 16px; }
+.content h1:not(:first-child) { margin-top: 48px; }
+.content h2 { font-size: 32px; font-weight: 600; letter-spacing: -0.015em; margin-top: 48px; margin-bottom: 16px; }
+.content h3 { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin-top: 32px; margin-bottom: 12px; }
+.content h4 { font-size: 20px; font-weight: 600; margin-top: 24px; margin-bottom: 12px; }
 
-.content p { margin-bottom: 16px; font-size: 20px; line-height: 1.7; }
+.content p { margin-bottom: 20px; font-size: 20px; line-height: 1.7; }
 .content a {
   color: var(--color-accent); text-decoration: none;
   border-bottom: 1px solid var(--color-accent-dim);
@@ -22,9 +24,11 @@
 .content strong { color: var(--color-foreground); font-weight: 600; }
 .content em { font-style: italic; }
 
-.content ul, .content ol { margin-bottom: 16px; padding-left: 0; list-style-position: inside; font-size: 20px; line-height: 1.7; }
-.content li { margin-bottom: 4px; }
-.content li::marker { color: var(--color-muted-foreground); font-size: 0.6em; }
+/* Outside markers give wrapped lines a hanging indent so lists stay legible */
+.content ul, .content ol { margin-bottom: 20px; padding-left: 28px; list-style-position: outside; font-size: 20px; line-height: 1.7; }
+.content li { margin-bottom: 6px; }
+.content li::marker { color: var(--color-muted-foreground); font-size: 0.8em; }
+.content li > ul, .content li > ol { margin-top: 6px; margin-bottom: 0; }
 
 .content code {
   font-family: var(--font-mono); font-size: 0.85em;
@@ -66,7 +70,7 @@
 
 .content blockquote {
   border-left: 3px solid var(--color-accent-dim);
-  padding-left: 24px; margin-bottom: 16px;
+  padding-left: 24px; margin-bottom: 20px;
   color: var(--color-muted-foreground); font-style: italic;
 }
 .content blockquote p { margin-bottom: 8px; }
@@ -79,7 +83,7 @@
 }
 .content td { padding: 8px 16px; border-bottom: 0.5px solid var(--color-border); }
 .content hr { border: none; height: 0.5px; background: var(--color-border); margin: 48px 0; }
-.content img { max-width: 100%; border-radius: 8px; margin: 16px 0; }
+.content img { max-width: 100%; border-radius: 8px; margin: 24px 0; }
 .content input[type="checkbox"] { accent-color: var(--color-accent); margin-right: 8px; }
 
 /* Staggered content appear */

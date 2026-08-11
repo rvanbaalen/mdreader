@@ -93,14 +93,17 @@ export function Reader({ editorContentRef }: ReaderProps) {
     return hljs.highlight(markdown, { language: 'markdown' }).value
   }, [sourceVisible, editMode, markdown])
 
-  const plClass = sidebarVisible ? 'pl-[360px]' : 'pl-16'
-  const prClass = tocVisible ? 'pr-[296px]' : 'pr-16'
-  const contentPadding = `${plClass} ${prClass}`
+  // Panel compensation lives on the scroller so the 800px column (DESIGN.md
+  // max content width) centers in the space the panels leave over: panel
+  // footprint = 16px margin + width + 24px gap on each side
+  const panelPad = `${sidebarVisible ? 'pl-[300px]' : 'pl-16'} ${tocVisible ? 'pr-[260px]' : 'pr-16'}`
+  const scrollerClass = `flex-1 overflow-y-scroll overflow-x-hidden relative scroll-smooth transition-[padding] duration-300 ease-move ${panelPad}`
+  const columnClass = 'max-w-[800px] mx-auto pt-24 pb-24'
 
   // Edit mode: editable textarea
   if (editMode) {
     return (
-      <div className="flex-1 overflow-hidden relative">
+      <div className={`flex-1 overflow-hidden relative transition-[padding] duration-300 ease-move ${panelPad}`}>
         <textarea
           ref={textareaRef}
           defaultValue={markdown}
@@ -108,7 +111,7 @@ export function Reader({ editorContentRef }: ReaderProps) {
             editorContentRef.current = e.target.value
             setDirty(e.target.value !== markdown)
           }}
-          className={`absolute inset-0 max-w-7xl mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words ${contentPadding}`}
+          className={`block w-full h-full ${columnClass} font-mono text-[14px] leading-[1.7] text-card-foreground bg-transparent border-none outline-none resize-none whitespace-pre-wrap break-words`}
           spellCheck={false}
         />
       </div>
@@ -118,8 +121,8 @@ export function Reader({ editorContentRef }: ReaderProps) {
   // Source view: read-only highlighted
   if (sourceVisible) {
     return (
-      <div className="flex-1 overflow-y-scroll overflow-x-hidden relative scroll-smooth">
-        <pre className={`max-w-7xl mx-auto pt-24 pb-12 font-mono text-sm leading-[1.7] whitespace-pre-wrap break-words select-text ${contentPadding}`}>
+      <div className={scrollerClass}>
+        <pre className={`${columnClass} font-mono text-[14px] leading-[1.7] whitespace-pre-wrap break-words select-text`}>
           <code className="hljs" dangerouslySetInnerHTML={{ __html: highlightedSource }} />
         </pre>
       </div>
@@ -128,11 +131,11 @@ export function Reader({ editorContentRef }: ReaderProps) {
 
   // Rendered markdown view
   return (
-    <div ref={renderedRef} className="flex-1 overflow-y-scroll overflow-x-hidden relative scroll-smooth">
+    <div ref={renderedRef} className={scrollerClass}>
       <div className="sticky top-0 h-0 pointer-events-none z-0 overflow-visible">
         <div className="h-screen w-full bg-[radial-gradient(ellipse_at_8%_15%,var(--color-accent-glow),transparent_50%)]" />
       </div>
-      <div ref={contentRef} className={`content relative z-[1] max-w-7xl mx-auto pt-24 pb-12 ${contentPadding}`} />
+      <div ref={contentRef} className={`content relative z-[1] ${columnClass}`} />
     </div>
   )
 }
