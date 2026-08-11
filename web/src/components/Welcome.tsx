@@ -1,6 +1,5 @@
 import { CommandIcon } from '@phosphor-icons/react'
 import { postMessage } from '../lib/bridge'
-import { Button } from '@/components/ui/button'
 import { Recents } from './Recents'
 
 interface RecentItem {
@@ -13,11 +12,11 @@ export function Welcome({ recents }: { recents: RecentItem[] }) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 w-full p-12">
       <h1
-        className="font-serif text-5xl font-bold text-foreground tracking-tight mb-2 animate-[fadeUp_0.6s_ease-out_0.1s_both]"
+        className="font-serif text-3xl font-bold text-foreground tracking-tight mb-2 animate-[fadeUp_0.6s_ease-out_0.1s_both]"
       >
         mdreader
       </h1>
-      <p className="font-serif text-lg text-muted-foreground mb-8 animate-[fadeUp_0.6s_ease-out_0.25s_both]">
+      <p className="font-serif text-base text-muted-foreground mb-8 animate-[fadeUp_0.6s_ease-out_0.25s_both]">
         A beautiful markdown reader
       </p>
 

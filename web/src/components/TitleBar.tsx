@@ -43,7 +43,7 @@ export function TitleBar() {
 
   return (
     <div
-      className="h-10 flex items-center pl-20 pr-4 select-none absolute top-0 left-0 right-0 z-10 bg-background backdrop-blur-md"
+      className="h-10 flex items-center pl-20 pr-4 select-none absolute top-0 left-0 right-0 z-10 bg-background/70 backdrop-blur-md"
       onMouseDown={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
         postMessage('startDrag')

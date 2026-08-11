@@ -26,7 +26,7 @@ export function AboutDialog({ info, onClose }: { info: AboutInfo | null; onClose
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200"
       onClick={onClose}
     >
       <div
@@ -38,7 +38,7 @@ export function AboutDialog({ info, onClose }: { info: AboutInfo | null; onClose
         </div>
 
         <div className="flex flex-col items-center gap-0.5">
-          <h1 className="text-lg font-semibold text-foreground tracking-tight">mdreader</h1>
+          <h1 className="text-base font-semibold text-foreground tracking-tight">mdreader</h1>
           <span className="text-xs text-muted-foreground tabular-nums">
             v{info.version}{info.commit ? ` (${info.commit})` : ''}
           </span>
@@ -53,7 +53,7 @@ export function AboutDialog({ info, onClose }: { info: AboutInfo | null; onClose
             postMessage('checkForUpdates')
             onClose()
           }}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-default"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
         >
           <ArrowsClockwiseIcon size={12} />
           Check for Updates
@@ -65,7 +65,7 @@ export function AboutDialog({ info, onClose }: { info: AboutInfo | null; onClose
             e.preventDefault()
             postMessage('openURL', { url: 'https://robinvanbaalen.nl/projects/mdreader' })
           }}
-          className="text-xs text-accent-foreground/70 hover:text-accent-foreground transition-colors duration-150 underline underline-offset-2"
+          className="text-xs text-accent hover:text-accent-bright transition-colors duration-150 underline underline-offset-2"
         >
           robinvanbaalen.nl/projects/mdreader
         </a>

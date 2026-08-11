@@ -14,7 +14,7 @@ export function Recents({ items }: { items: RecentItem[] }) {
     <div className="mt-12 w-[320px] animate-[fadeUp_0.5s_ease-out_0.6s_both]">
       <div className="flex items-center gap-2 mb-3">
         <ClockIcon size={14} className="text-dim" />
-        <span className="font-sans text-[11px] font-medium text-dim uppercase tracking-wider">Recent</span>
+        <span className="font-sans text-xs font-medium text-dim">Recent</span>
       </div>
       <div className="flex flex-col gap-1">
         {items.slice(0, 5).map((item) => (
