@@ -18,7 +18,6 @@ export interface AppState {
   sidebarVisible: boolean
   tocVisible: boolean
   sourceVisible: boolean
-  editMode: boolean
   dirty: boolean
   searchOpen: boolean
   folderTree: FileNode[]
@@ -28,7 +27,6 @@ export interface AppState {
   toggleSidebar: () => void
   toggleToc: () => void
   toggleSource: () => void
-  toggleEdit: () => void
   setDirty: (d: boolean) => void
   setSearchOpen: (open: boolean) => void
   setHeadings: (h: Heading[]) => void

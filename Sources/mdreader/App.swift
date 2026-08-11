@@ -707,7 +707,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         tocItem.keyEquivalentModifierMask = [.command, .shift]; tocItem.target = self; viewSub.addItem(tocItem)
         let themeItem = NSMenuItem(title: "Toggle Theme", action: #selector(menuToggleTheme), keyEquivalent: "t")
         themeItem.keyEquivalentModifierMask = [.command, .shift]; themeItem.target = self; viewSub.addItem(themeItem)
-        let editItem = NSMenuItem(title: "Toggle Edit Mode", action: #selector(menuToggleEdit), keyEquivalent: "e")
+        let editItem = NSMenuItem(title: "Edit Source", action: #selector(menuToggleEdit), keyEquivalent: "e")
         editItem.target = self; viewSub.addItem(editItem)
         viewMenu.submenu = viewSub; menu.addItem(viewMenu)
 

@@ -1,4 +1,4 @@
-import { SidebarIcon, SidebarSimpleIcon, CodeIcon, BookOpenIcon, PencilSimpleIcon, FloppyDiskIcon, SunIcon, MoonIcon, CommandIcon, ArrowUpIcon } from '@phosphor-icons/react'
+import { SidebarIcon, SidebarSimpleIcon, CodeIcon, BookOpenIcon, FloppyDiskIcon, SunIcon, MoonIcon, CommandIcon, ArrowUpIcon } from '@phosphor-icons/react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
@@ -35,8 +35,8 @@ function ToolbarItem({ children, onClick, active, disabled, label, shortcut }: {
 }
 
 export function TitleBar() {
-  const { theme, currentFile, currentFolder, sidebarVisible, tocVisible, sourceVisible, editMode, dirty,
-    cycleTheme, toggleSidebar, toggleToc, toggleSource, toggleEdit, folderTree } = useApp()
+  const { theme, currentFile, currentFolder, sidebarVisible, tocVisible, sourceVisible, dirty,
+    cycleTheme, toggleSidebar, toggleToc, toggleSource, folderTree } = useApp()
 
   const hasFile = !!currentFile
   const hasFolder = folderTree.length > 0
@@ -70,15 +70,12 @@ export function TitleBar() {
             <ToolbarItem onClick={toggleToc} active={tocVisible} label="Contents" shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd><ArrowUpIcon size={10} /></Kbd><Kbd>E</Kbd></KbdGroup>}>
               <SidebarSimpleIcon size={14} className="rotate-180" />
             </ToolbarItem>
-            <ToolbarItem onClick={toggleSource} active={sourceVisible && !editMode} label={sourceVisible && !editMode ? 'Reader' : 'Source'} shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd><ArrowUpIcon size={10} /></Kbd><Kbd>S</Kbd></KbdGroup>}>
-              <span key={sourceVisible && !editMode ? 'source' : 'reader'} className="animate-spin-fade">
-                {sourceVisible && !editMode ? <BookOpenIcon size={14} /> : <CodeIcon size={14} />}
+            <ToolbarItem onClick={toggleSource} active={sourceVisible} label={sourceVisible ? 'Reader' : 'Edit source'} shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd>E</Kbd></KbdGroup>}>
+              <span key={sourceVisible ? 'source' : 'reader'} className="animate-spin-fade">
+                {sourceVisible ? <BookOpenIcon size={14} /> : <CodeIcon size={14} />}
               </span>
             </ToolbarItem>
-            <ToolbarItem onClick={toggleEdit} active={editMode} label="Edit" shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd>E</Kbd></KbdGroup>}>
-              <PencilSimpleIcon size={14} />
-            </ToolbarItem>
-            {editMode && (
+            {sourceVisible && (
               <ToolbarItem onClick={() => window.app.save()} active={dirty} disabled={!dirty} label="Save" shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd>S</Kbd></KbdGroup>}>
                 <FloppyDiskIcon size={14} />
               </ToolbarItem>
