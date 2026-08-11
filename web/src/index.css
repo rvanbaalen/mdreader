@@ -124,6 +124,18 @@ body { margin: 0; }
 
 ::selection { background: var(--color-accent-glow); color: var(--color-primary); }
 
+/* In-document search highlights (⌘F) */
+mark.search-hit {
+  background: color-mix(in oklab, var(--color-accent) 25%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+mark.search-hit-active {
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
 /* Hide scrollbar visually but keep native scroll physics */
 * { scrollbar-width: none; }
 ::-webkit-scrollbar { display: none; }

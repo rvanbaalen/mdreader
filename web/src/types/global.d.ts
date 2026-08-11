@@ -21,6 +21,7 @@ interface AppBridge {
   save: () => void
   onSaveComplete: (success: boolean) => void
   showAbout: (version: string, commit: string, build: string) => void
+  openSearch: () => void
   nativeAction: (action: string) => void
 }
 

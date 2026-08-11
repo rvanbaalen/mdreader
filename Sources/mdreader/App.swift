@@ -714,6 +714,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let editMenu = NSMenuItem(); let editSub = NSMenu(title: "Edit")
         editSub.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
         editSub.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editSub.addItem(.separator())
+        let findItem = NSMenuItem(title: "Find...", action: #selector(menuFind), keyEquivalent: "f")
+        findItem.target = self; editSub.addItem(findItem)
         editMenu.submenu = editSub; menu.addItem(editMenu)
 
         let helpMenu = NSMenuItem(); let helpSub = NSMenu(title: "Help")
@@ -756,6 +759,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func menuSetDefault() {
         if let wc = keyWindowController() { setAsDefaultApp(from: wc) }
     }
+    @objc func menuFind() { keyWindowController()?.webView.evaluateJavaScript("app.openSearch()") }
     @objc func menuToggleSidebar() { keyWindowController()?.webView.evaluateJavaScript("app.toggleSidebar()") }
     @objc func menuToggleToc() { keyWindowController()?.webView.evaluateJavaScript("app.toggleToc()") }
     @objc func menuToggleTheme() { keyWindowController()?.webView.evaluateJavaScript("app.cycleTheme()") }
