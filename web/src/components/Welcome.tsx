@@ -23,10 +23,10 @@ export function Welcome({ recents }: { recents: RecentItem[] }) {
       <div className="animate-[fadeUp_0.5s_ease-out_0.4s_both] group">
         <button
           onClick={() => postMessage('open')}
-          className="flex items-center justify-between w-[220px] px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-sans text-sm font-medium cursor-pointer transition-all duration-150 hover:bg-secondary/80"
+          className="flex items-center justify-between w-55 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-sans text-sm font-medium cursor-pointer transition-all duration-150 hover:bg-secondary/80"
         >
           Open
-          <span className="flex items-center gap-0.5 opacity-0 translate-x-2 transition-[opacity] duration-75 group-hover:opacity-60 group-hover:translate-x-0 group-hover:transition-all group-hover:duration-150 text-xs">
+          <span className="flex items-center gap-0.5 opacity-0 translate-x-2 transition-opacity duration-75 group-hover:opacity-60 group-hover:translate-x-0 group-hover:transition-all group-hover:duration-150 text-xs">
             <CommandIcon size={11} />
             <span>O</span>
           </span>

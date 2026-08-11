@@ -26,14 +26,14 @@ export function AboutDialog({ info, onClose }: { info: AboutInfo | null; onClose
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200"
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-background/60 backdrop-blur-sm transition-opacity duration-200"
       onClick={onClose}
     >
       <div
-        className="w-[280px] rounded-2xl bg-card border border-border/50 shadow-2xl p-8 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200"
+        className="w-70 rounded-2xl bg-card border border-border/50 shadow-2xl p-8 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-16 h-16 rounded-xl bg-[oklch(0.25_0.02_260)] flex items-center justify-center">
+        <div className="w-16 h-16 rounded-xl bg-icon-tile flex items-center justify-center">
           <BookOpenIcon size={32} weight="fill" className="text-white/90" />
         </div>
 

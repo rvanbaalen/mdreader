@@ -27,7 +27,7 @@ export function UpdateBanner({ latest, onDismiss }: UpdateBannerProps) {
   }
 
   return (
-    <div className="animate-[fadeUp_0.4s_ease-out]">
+    <div className="animate-fade-up">
       <div className="flex items-center gap-3 px-4 py-2 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
         <span className="font-sans text-sm text-card-foreground">
           {done

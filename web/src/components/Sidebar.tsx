@@ -50,7 +50,7 @@ function FileRow({ node }: { node: FileNode }) {
       </span>
       <span className="tree-name truncate min-w-0 ml-2">{node.name}</span>
       {showTip && (
-        <span className="absolute left-0 top-full bg-card border border-border rounded px-2 py-1 text-xs text-foreground whitespace-nowrap shadow-lg z-50 animate-[fadeIn_0.15s_ease-out]">
+        <span className="absolute left-0 top-full bg-card border border-border rounded px-2 py-1 text-xs text-foreground whitespace-nowrap shadow-lg z-50 animate-fade-in-short">
           {node.name}
         </span>
       )}
@@ -75,9 +75,9 @@ export function Sidebar() {
 
   return (
     <div
-      className={`absolute top-12 bottom-4 left-4 z-10 w-[260px] transition-all duration-300 ease-enter ${sidebarVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
+      className={`absolute top-12 bottom-4 left-4 z-10 w-65 transition-all duration-300 ease-enter ${sidebarVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
     >
-      <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-[16px] py-6 overflow-y-auto shadow-lg shadow-background/50">
+      <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-lg py-6 overflow-y-auto shadow-lg shadow-background/50">
         {currentFolder && (
           <div className="px-6 pb-3 font-sans text-xs font-medium text-muted-foreground">
             {currentFolder}

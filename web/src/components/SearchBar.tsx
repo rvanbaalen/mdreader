@@ -113,7 +113,7 @@ export function SearchBar({ getRoot, renderKey }: { getRoot: () => HTMLElement |
   if (!searchOpen) return null
 
   return (
-    <div className="absolute top-12 right-4 z-20 animate-[fadeUp_0.2s_ease-out]">
+    <div className="absolute top-12 right-4 z-20 animate-fade-up-short">
       <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-xl border border-border bg-card/90 backdrop-blur-md shadow-lg">
         <MagnifyingGlassIcon size={14} className="text-muted-foreground shrink-0" />
         <input

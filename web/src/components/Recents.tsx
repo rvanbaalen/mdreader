@@ -11,7 +11,7 @@ export function Recents({ items }: { items: RecentItem[] }) {
   if (items.length === 0) return null
 
   return (
-    <div className="mt-12 w-[320px] animate-[fadeUp_0.5s_ease-out_0.6s_both]">
+    <div className="mt-12 w-80 animate-[fadeUp_0.5s_ease-out_0.6s_both]">
       <div className="flex items-center gap-2 mb-3">
         <ClockIcon size={14} className="text-dim" />
         <span className="font-sans text-xs font-medium text-dim">Recent</span>
@@ -28,7 +28,7 @@ export function Recents({ items }: { items: RecentItem[] }) {
               : <FileTextIcon size={16} className="text-muted-foreground shrink-0" />
             }
             <span className="truncate">{item.name}</span>
-            <span className="ml-auto text-xs text-dim truncate max-w-[140px] opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <span className="ml-auto text-xs text-dim truncate max-w-35 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
               {item.path.replace(/^\/Users\/[^/]+/, '~')}
             </span>
           </button>
