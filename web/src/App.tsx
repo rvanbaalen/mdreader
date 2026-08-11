@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { UpdateBanner } from './components/UpdateBanner'
+import { DefaultAppBanner } from './components/DefaultAppBanner'
 import { AboutDialog } from './components/AboutDialog'
 import { postMessage } from './lib/bridge'
 import type { Heading } from './lib/markdown'
@@ -27,6 +28,7 @@ export default function App() {
   const [dirty, setDirty] = useState(false)
   const [fileDir, setFileDir] = useState<string | null>(null)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+  const [defaultBannerVisible, setDefaultBannerVisible] = useState(false)
   const [folderTree, setFolderTree] = useState<FileNode[]>([])
   const [recents, setRecents] = useState<RecentItem[]>([])
   const [aboutInfo, setAboutInfo] = useState<{ version: string; commit: string; build: string } | null>(null)
@@ -98,7 +100,7 @@ export default function App() {
       toggleToc: () => setTocVisible(v => !v),
       toggleSource: () => { setSourceVisible(v => !v); setEditMode(false) },
       toggleEdit: () => toggleEdit(),
-      showDefaultBanner: () => {},
+      showDefaultBanner: () => setDefaultBannerVisible(true),
       setRecents: (items: RecentItem[]) => setRecents(items),
       showUpdateBanner: (_current: string, latest: string) => setUpdateVersion(latest),
       showToast: (type: string, msg: string) => {
@@ -175,12 +177,17 @@ export default function App() {
             <Welcome recents={recents} />
           )}
         </div>
-        {updateVersion && (
-          <UpdateBanner
-            latest={updateVersion}
-            onDismiss={() => setUpdateVersion(null)}
-          />
-        )}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+          {updateVersion && (
+            <UpdateBanner
+              latest={updateVersion}
+              onDismiss={() => setUpdateVersion(null)}
+            />
+          )}
+          {defaultBannerVisible && (
+            <DefaultAppBanner onDismiss={() => setDefaultBannerVisible(false)} />
+          )}
+        </div>
         <Toaster />
         <AboutDialog info={aboutInfo} onClose={() => setAboutInfo(null)} />
       </div>
