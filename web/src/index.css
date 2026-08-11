@@ -34,6 +34,15 @@
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-move: cubic-bezier(0.45, 0, 0.55, 1);
 
+  /* Body copy line-height per DESIGN.md */
+  --leading-body: 1.7;
+
+  /* Entrance animations on the DESIGN.md duration scale (short 150ms, long 500ms) */
+  --animate-fade-up: fadeUp 0.5s ease-out both;
+  --animate-fade-up-short: fadeUp 0.15s ease-out both;
+  --animate-fade-in-short: fadeIn 0.15s ease-out both;
+  --animate-spin-fade: spin-fade 0.3s ease-out both;
+
   /* shadcn semantic tokens — dark theme (default) */
   --color-background: oklch(10% 0.01 260);
   --color-foreground: oklch(93% 0.015 80);
@@ -72,6 +81,8 @@
   --color-accent-dim: oklch(52% 0.03 260);
   --color-accent-glow: oklch(62% 0.04 260 / 0.1);
   --color-accent-subtle: oklch(62% 0.04 260 / 0.05);
+  /* App-icon tile in the About dialog — theme-invariant */
+  --color-icon-tile: oklch(25% 0.02 260);
 }
 
 [data-theme="light"] {

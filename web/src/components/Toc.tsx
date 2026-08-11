@@ -5,9 +5,9 @@ export function Toc() {
 
   return (
     <div
-      className={`absolute top-12 bottom-4 right-4 z-10 w-[220px] transition-all duration-300 ease-enter ${tocVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
+      className={`absolute top-12 bottom-4 right-4 z-10 w-55 transition-all duration-300 ease-enter ${tocVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
     >
-      <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-[16px] py-6 overflow-y-auto shadow-lg shadow-background/50">
+      <div className="h-full rounded-xl border border-border/40 bg-card/60 backdrop-blur-lg py-6 overflow-y-auto shadow-lg shadow-background/50">
         <div className="px-6 pb-3 font-sans text-xs font-medium text-muted-foreground">
           On this page
         </div>

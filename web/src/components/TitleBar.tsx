@@ -71,7 +71,7 @@ export function TitleBar() {
               <SidebarSimpleIcon size={14} className="rotate-180" />
             </ToolbarItem>
             <ToolbarItem onClick={toggleSource} active={sourceVisible && !editMode} label={sourceVisible && !editMode ? 'Reader' : 'Source'} shortcut={<KbdGroup><Kbd><CommandIcon size={10} /></Kbd><Kbd><ArrowUpIcon size={10} /></Kbd><Kbd>S</Kbd></KbdGroup>}>
-              <span key={sourceVisible && !editMode ? 'source' : 'reader'} className="animate-[spin-fade_0.3s_ease-out_both]">
+              <span key={sourceVisible && !editMode ? 'source' : 'reader'} className="animate-spin-fade">
                 {sourceVisible && !editMode ? <BookOpenIcon size={14} /> : <CodeIcon size={14} />}
               </span>
             </ToolbarItem>
